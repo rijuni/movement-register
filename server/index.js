@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 const { connectDB, sequelize } = require('./config/db');
 
@@ -18,6 +19,18 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/movements', movementRoutes);
 app.use('/api/employees', employeeRoutes);
+
+// Static file serving for deployment
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// Catch-all to serve index.html for React Router (client-side routing)
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  } else {
+    next();
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 

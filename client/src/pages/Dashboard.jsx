@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Clock, User, Info, FileText, CheckCircle, History, Trash2, MapPin, MessageSquare, Search, UserCheck, Shield, Sparkles, ChevronRight, Plus, X, Users, AlertCircle } from 'lucide-react';
+import { LogOut, Clock, User, Info, FileText, CheckCircle, History, Trash2, MapPin, MessageSquare, Search, UserCheck, Shield, Sparkles, ChevronRight, Plus, X, Users, AlertCircle, Sun, Moon } from 'lucide-react';
 import { MANAGERS, LOCATIONS } from '../constants';
 import { usePagination, Pagination } from '../utils';
 
@@ -9,6 +9,22 @@ export default function Dashboard() {
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
+  
+  // Theme State
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   // Drawer State
   const [showForm, setShowForm] = useState(false);
@@ -75,11 +91,11 @@ export default function Dashboard() {
 
   const fetchInitialData = async (currentUser) => {
     try {
-      const moveRes = await fetch(`http://localhost:5000/api/movements?role=${currentUser.role}&username=${currentUser.username}`);
+      const moveRes = await fetch(`/api/movements?role=${currentUser.role}&username=${currentUser.username}`);
       const moveData = await moveRes.json();
       setRecords(moveData);
 
-      const empRes = await fetch('http://localhost:5000/api/employees');
+      const empRes = await fetch('/api/employees');
       const empData = await empRes.json();
       setEmployees(empData);
     } catch (err) {
@@ -89,7 +105,7 @@ export default function Dashboard() {
 
   const fetchRecords = async (currentUser) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/movements?role=${currentUser.role}&username=${currentUser.username}`);
+      const response = await fetch(`/api/movements?role=${currentUser.role}&username=${currentUser.username}`);
       const data = await response.json();
       setRecords(data);
     } catch (err) {
@@ -123,7 +139,7 @@ export default function Dashboard() {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/movements', {
+      const response = await fetch('/api/movements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRecord)
@@ -141,7 +157,7 @@ export default function Dashboard() {
 
   const handleReturn = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/movements/${id}/return`, {
+      const response = await fetch(`/api/movements/${id}/return`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ returnTime: new Date().toISOString() })
@@ -167,7 +183,7 @@ export default function Dashboard() {
   const fetchEmployees = async () => {
     try {
       // Fetch ALL employees for the admin master list
-      const res = await fetch('http://localhost:5000/api/employees');
+      const res = await fetch('/api/employees');
       const data = await res.json();
       setEmployees(data);
     } catch (err) {
@@ -180,11 +196,11 @@ export default function Dashboard() {
     setEmpError('');
     setEmpSuccess('');
     try {
-      const res = await fetch('http://localhost:5000/api/employees', {
+      const res = await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id: newEmpId.trim(), 
+        body: JSON.stringify({
+          id: newEmpId.trim(),
           name: newEmpName.trim(),
           department: newEmpDept
         })
@@ -208,7 +224,7 @@ export default function Dashboard() {
     const action = currentStatus ? 'deactivate' : 'activate';
     if (!window.confirm(`Are you sure you want to ${action} "${name}"?`)) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/employees/${id}/toggle`, { method: 'PATCH' });
+      const res = await fetch(`/api/employees/${id}/toggle`, { method: 'PATCH' });
       if (res.ok) {
         const updated = await res.json();
         setEmpSuccess(`"${name}" marked as ${updated.isActive ? 'Active' : 'Inactive'}.`);
@@ -243,47 +259,46 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-
-      {/* ── Slide-in Drawer ── */}
-      {/* Backdrop */}
+    <div className="min-h-screen bg-[var(--industrial-bg)] text-[var(--industrial-text)] transition-colors duration-500 pb-20">
+      {/* ── Side Drawer Overlay ── */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${showForm ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${showForm ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => { }} // Frozen: doesn't close on click
       />
 
-      {/* Drawer Panel */}
-      <div className={`fixed top-0 left-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transition-transform duration-500 ease-in-out ${showForm ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* ── New Movement Drawer ── */}
+      <div className={`fixed left-0 top-0 h-full w-full max-w-md bg-[var(--industrial-card)] border-r border-[var(--industrial-border)] shadow-2xl z-50 transform transition-transform duration-500 ease-out flex flex-col ${showForm ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Drawer Header */}
-        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between flex-shrink-0">
+        <div className="px-6 py-5 border-b border-[var(--industrial-border)] bg-[var(--industrial-text)]/5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center mr-3">
-              <Plus className="w-4 h-4 text-emerald-600" />
+            <div className="w-8 h-8 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center mr-3">
+              <Plus className="w-4 h-4 text-[#D4AF37]" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900">New Movement</h3>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Going Out</p>
+              <h3 className="text-base font-black text-[var(--industrial-text)]">New Movement</h3>
+              <p className="text-[9px] font-bold text-[#D4AF37] uppercase tracking-widest">Going Out</p>
             </div>
           </div>
           <button
             onClick={() => setShowForm(false)}
-            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all duration-200"
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:text-[var(--industrial-text)] transition-all duration-200"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Drawer Body — scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar">
           <form onSubmit={handleGoOut} className="space-y-5">
             {/* Select Location/Department */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Location</label>
+              <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Location</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                  <MapPin className="h-3.5 w-3.5 text-[var(--industrial-text-muted)] group-focus-within:text-[#D4AF37] transition-colors" />
                 </div>
                 <select
-                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all duration-300 bg-white font-bold text-xs text-slate-700 cursor-pointer outline-none appearance-none"
+                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none"
                   value={selectedDept}
                   onChange={(e) => {
                     setSelectedDept(e.target.value);
@@ -291,60 +306,60 @@ export default function Dashboard() {
                   }}
                   required
                 >
-                  <option value="" disabled>Choose Location...</option>
-                  <option value="IT DATA CENTER">IT DATA CENTER</option>
-                  <option value="IT COMMAND CENTER">IT COMMAND CENTER</option>
+                  <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Choose Location...</option>
+                  <option value="IT DATA CENTER" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">IT DATA CENTER</option>
+                  <option value="IT COMMAND CENTER" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">IT COMMAND CENTER</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <ChevronRight className="h-3 w-3 text-slate-400 rotate-90" />
+                  <ChevronRight className="h-3 w-3 text-[var(--industrial-text-muted)] rotate-90" />
                 </div>
               </div>
             </div>
 
             {/* Select Person */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Select Person</label>
+              <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Select Person</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                  <UserCheck className="h-3.5 w-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                  <UserCheck className="h-3.5 w-3.5 text-[var(--industrial-text-muted)] group-focus-within:text-[#D4AF37] transition-colors" />
                 </div>
                 <select
-                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all duration-300 bg-white font-bold text-xs text-slate-700 cursor-pointer outline-none appearance-none"
+                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none disabled:opacity-50"
                   value={employeeName}
                   onChange={(e) => setEmployeeName(e.target.value)}
                   required
                   disabled={!selectedDept}
                 >
-                  <option value="" disabled>{selectedDept ? 'Choose a name...' : 'First select location'}</option>
+                  <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{selectedDept ? 'Choose a name...' : 'First select location'}</option>
                   {employees
                     .filter(emp => emp.isActive !== false && emp.department === selectedDept)
                     .map(emp => (
-                      <option key={emp.id} value={emp.name}>{emp.name}</option>
+                      <option key={emp.id} value={emp.name} className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{emp.name}</option>
                     ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <ChevronRight className="h-3 w-3 text-slate-400 rotate-90" />
+                  <ChevronRight className="h-3 w-3 text-[var(--industrial-text-muted)] rotate-90" />
                 </div>
               </div>
             </div>
 
             {/* Whom to Inform */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Whom to Inform</label>
+              <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Whom to Inform</label>
               <select
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 bg-slate-50/50 focus:bg-white font-bold text-xs text-slate-700 cursor-pointer outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none"
                 value={informTo}
                 onChange={(e) => setInformTo(e.target.value)}
                 required
               >
-                <option value="" disabled>Select whom to inform</option>
-                {MANAGERS.map(mgr => <option key={mgr} value={mgr}>{mgr}</option>)}
-                <option value="Others">Others</option>
+                <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Select whom to inform</option>
+                {MANAGERS.map(mgr => <option key={mgr} value={mgr} className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{mgr}</option>)}
+                <option value="Others" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Others</option>
               </select>
               {informTo === 'Others' && (
                 <input
                   type="text"
-                  className="mt-2 w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 bg-white font-bold text-xs outline-none"
+                  className="mt-2 w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] outline-none"
                   placeholder="Enter full name"
                   value={customInformTo}
                   onChange={(e) => setCustomInformTo(e.target.value)}
@@ -355,20 +370,20 @@ export default function Dashboard() {
 
             {/* Visit Location */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Visit Location</label>
+              <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Visit Location</label>
               <select
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 bg-slate-50/50 focus:bg-white font-bold text-xs text-slate-700 cursor-pointer outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none"
                 value={visitLocation}
                 onChange={(e) => setVisitLocation(e.target.value)}
                 required
               >
-                <option value="" disabled>Select location</option>
-                {LOCATIONS.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Select location</option>
+                {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{loc}</option>)}
               </select>
               {visitLocation === 'Others' && (
                 <input
                   type="text"
-                  className="mt-2 w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 bg-white font-bold text-xs outline-none"
+                  className="mt-2 w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] outline-none"
                   placeholder="Enter custom location"
                   value={customLocation}
                   onChange={(e) => setCustomLocation(e.target.value)}
@@ -379,9 +394,9 @@ export default function Dashboard() {
 
             {/* Purpose */}
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Purpose</label>
+              <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Purpose</label>
               <textarea
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 bg-slate-50/50 focus:bg-white font-bold text-xs text-slate-700 resize-none outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] resize-none outline-none"
                 placeholder="Reason for leaving..."
                 rows="3"
                 value={purpose}
@@ -393,7 +408,7 @@ export default function Dashboard() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full flex justify-center items-center py-3 px-6 rounded-xl shadow-lg shadow-emerald-100 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98]"
+              className="w-full flex justify-center items-center py-3 px-6 rounded-xl gold-gradient gold-glow text-xs font-black text-[#0B0F19] transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98]"
             >
               <Clock className="w-5 h-5 mr-2.5" />
               Record Movement
@@ -403,49 +418,62 @@ export default function Dashboard() {
       </div>
 
       {/* ── Navigation ── */}
-      <nav className="bg-white/70 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200/60 shadow-sm">
+      <nav className="bg-[var(--industrial-card)]/80 backdrop-blur-xl sticky top-0 z-30 border-b border-[var(--industrial-border)] shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <div className={`p-2 rounded-xl shadow-lg mr-3 ${isAdmin ? 'bg-indigo-600 shadow-indigo-100' : 'bg-emerald-600 shadow-emerald-100'}`}>
-                <Clock className="w-5 h-5 text-white" />
+              <div className={`p-2 rounded-xl gold-glow gold-gradient mr-3`}>
+                <Clock className="w-5 h-5 text-[#0B0F19]" />
               </div>
               <div className="hidden xs:block">
-                <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none">KIMS Log</h1>
+                <h1 className="text-xl font-black text-[var(--industrial-text)] tracking-tight leading-none">KIMS Portal</h1>
                 <div className="flex items-center mt-1.5">
                   <div className="relative flex h-2 w-2 mr-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D4AF37]"></span>
                   </div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Live Monitoring</p>
+                  <p className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-[0.15em]">Live Monitoring</p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center space-x-6">
               {/* Real-time Clock */}
-              <div className="hidden lg:flex flex-col items-end border-r border-slate-200 pr-4">
-                <span className="text-base font-black text-slate-800 tabular-nums leading-none">
+              <div className="hidden lg:flex flex-col items-end border-r border-[var(--industrial-border)] pr-4">
+                <span className="text-base font-black text-[var(--industrial-text)] tabular-nums leading-none">
                   {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                <span className="text-[9px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest mt-1">
                   {currentTime.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })}
                 </span>
               </div>
 
               <div className="flex items-center space-x-3">
+                {/* Theme Toggle Button */}
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center justify-center p-2.5 rounded-2xl bg-[var(--industrial-text)]/5 hover:bg-[var(--industrial-text)]/10 text-[var(--industrial-text-muted)] hover:text-[var(--industrial-text)] transition-all duration-300 border border-[var(--industrial-border)] shadow-sm"
+                  title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-[#D4AF37] hover:rotate-45 transition-transform duration-300" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-[#D4AF37] hover:-rotate-12 transition-transform duration-300" />
+                  )}
+                </button>
+
                 {isAdmin ? (
                   <>
                     <button
                       onClick={() => setShowEmpMasterModal(true)}
-                      className="hidden md:flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-all duration-300 px-5 py-2.5 rounded-2xl text-sm font-bold border border-indigo-100"
+                      className="hidden md:flex items-center bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] transition-all duration-300 px-5 py-2.5 rounded-2xl text-sm font-bold border border-[#D4AF37]/20"
                     >
                       <Users className="w-4 h-4 mr-2" />
                       Employee Master
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center text-slate-500 hover:text-red-600 transition-all duration-300 p-2.5 md:px-5 md:py-2.5 rounded-2xl text-sm font-bold hover:bg-red-50 border border-transparent"
+                      className="flex items-center text-[var(--industrial-text-muted)] hover:text-red-500 transition-all duration-300 p-2.5 md:px-5 md:py-2.5 rounded-2xl text-sm font-bold hover:bg-red-500/10 border border-transparent"
                     >
                       <LogOut className="w-4 h-4 md:mr-2" />
                       <span className="hidden md:inline">Logout</span>
@@ -455,16 +483,16 @@ export default function Dashboard() {
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => navigate('/records')}
-                      className="flex items-center bg-white hover:bg-slate-50 text-slate-700 transition-all duration-300 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 shadow-sm"
+                      className="flex items-center bg-[var(--industrial-text)]/5 hover:bg-[var(--industrial-text)]/10 text-[var(--industrial-text)] transition-all duration-300 px-4 py-2 rounded-xl text-xs font-bold border border-[var(--industrial-border)]"
                     >
-                      <History className="w-3.5 h-3.5 mr-1.5" />
+                      <History className="w-3.5 h-3.5 mr-1.5 text-[#D4AF37]" />
                       Archive
                     </button>
                     <button
                       onClick={() => navigate('/admin')}
-                      className="flex items-center bg-slate-900 hover:bg-black text-white transition-all duration-300 px-4 py-2 rounded-xl text-xs font-bold shadow-lg transform hover:-translate-y-0.5"
+                      className="flex items-center bg-[#D4AF37] hover:bg-[#B8860B] text-[#0B0F19] transition-all duration-300 px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-amber-900/20 transform hover:-translate-y-0.5"
                     >
-                      <Shield className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
+                      <Shield className="w-3.5 h-3.5 mr-1.5 text-[#0B0F19]" />
                       Admin
                     </button>
                   </div>
@@ -477,15 +505,13 @@ export default function Dashboard() {
 
       {/* ── Main Content ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-
-        {/* Greeting & Quick Stats */}
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-black text-[var(--industrial-text)] tracking-tight">
               {isAdmin ? `Welcome, ${user.username}` : 'Employee Movement Portal'}
             </h2>
-            <p className="text-slate-400 font-bold mt-1 text-sm flex items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span>
+            <p className="text-[var(--industrial-text-muted)] font-bold mt-1 text-sm flex items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-2"></span>
               {activeRecords.length} people are currently out.
             </p>
           </div>
@@ -493,7 +519,7 @@ export default function Dashboard() {
           {!isAdmin && (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl text-sm font-black shadow-lg shadow-emerald-200 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] group"
+              className="flex items-center justify-center gold-gradient gold-glow text-[#0B0F19] px-6 py-3 rounded-2xl text-sm font-black transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] group"
             >
               <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
               New Movement
@@ -504,21 +530,21 @@ export default function Dashboard() {
         {/* Currently Outside Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex items-center">
-              <div className="w-6 h-6 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                <Info className="w-3 h-3 text-orange-600" />
+            <h3 className="text-sm font-black text-[var(--industrial-text-muted)] uppercase tracking-[0.2em] flex items-center">
+              <div className="w-6 h-6 bg-[#D4AF37]/10 rounded-lg flex items-center justify-center mr-3">
+                <Info className="w-3 h-3 text-[#D4AF37]" />
               </div>
               Current Status
             </h3>
           </div>
 
           {activeRecords.length === 0 ? (
-            <div className="bg-white rounded-[3rem] border border-slate-100 p-16 text-center shadow-sm">
-              <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
-                <CheckCircle className="w-10 h-10 text-emerald-500" />
+            <div className="bg-[var(--industrial-card)] rounded-[3rem] border border-[var(--industrial-border)] p-16 text-center shadow-2xl">
+              <div className="w-20 h-20 bg-[#D4AF37]/10 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
+                <CheckCircle className="w-10 h-10 text-[#D4AF37]" />
               </div>
-              <h4 className="text-xl font-black text-slate-900 mb-2">Clear Records</h4>
-              <p className="text-slate-400 font-bold max-w-xs mx-auto">
+              <h4 className="text-xl font-black text-[var(--industrial-text)] mb-2">Clear Records</h4>
+              <p className="text-[var(--industrial-text-muted)] font-bold max-w-xs mx-auto">
                 {isAdmin ? 'All personnel are accounted for.' : 'No one is currently recorded as being outside.'}
               </p>
             </div>
@@ -526,24 +552,24 @@ export default function Dashboard() {
             <div className="space-y-2">
               <div className="space-y-2">
                 {paginatedActiveRecords.map(record => (
-                  <div key={record.id} className="bg-white rounded-xl border border-slate-100 p-2.5 px-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+                  <div key={record.id} className="bg-[var(--industrial-card)] rounded-xl border border-[var(--industrial-border)] p-2.5 px-6 shadow-xl hover:border-[#D4AF37]/20 transition-all duration-300 group">
                     <div className="grid grid-cols-2 md:grid-cols-4 items-center gap-4">
                       {/* Column 1: Identity */}
                       <div className="flex items-center min-w-0">
-                        <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-emerald-50 transition-colors shrink-0">
-                          <User className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                        <div className="w-8 h-8 bg-[var(--industrial-text)]/5 rounded-lg flex items-center justify-center mr-3 group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
+                          <User className="w-4 h-4 text-[var(--industrial-text-muted)] group-hover:text-[#D4AF37]" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-black text-slate-900 truncate">{record.employeeName}</h4>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Staff Member</p>
+                          <h4 className="text-xs font-black text-[var(--industrial-text)] truncate">{record.employeeName}</h4>
+                          <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest">Staff Member</p>
                         </div>
                       </div>
 
                       {/* Column 2: Time & Inform To */}
-                      <div className="hidden md:flex flex-col text-[10px] font-bold text-slate-500">
+                      <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)]">
                         <div className="flex items-center">
-                          <Clock className="w-3 h-3 text-orange-500 mr-2 shrink-0" />
-                          <span>Out: <span className="text-slate-900">{formatTime(record.outTime)}</span></span>
+                          <Clock className="w-3 h-3 text-[#D4AF37] mr-2 shrink-0" />
+                          <span>Out: <span className="text-[var(--industrial-text)]">{formatTime(record.outTime)}</span></span>
                         </div>
                         <div className="flex items-center mt-1 ml-5 opacity-60">
                           <span>Inform: {record.informTo}</span>
@@ -551,10 +577,10 @@ export default function Dashboard() {
                       </div>
 
                       {/* Column 3: Location & Purpose */}
-                      <div className="hidden md:flex flex-col text-[10px] font-bold text-slate-500 min-w-0">
+                      <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)] min-w-0">
                         <div className="flex items-center">
-                          <MapPin className="w-3 h-3 text-slate-400 mr-2 shrink-0" />
-                          <span className="truncate">To: <span className="text-slate-900">{record.visitLocation}</span></span>
+                          <MapPin className="w-3 h-3 text-[var(--industrial-text-muted)] mr-2 shrink-0" />
+                          <span className="truncate">To: <span className="text-[var(--industrial-text)]">{record.visitLocation}</span></span>
                         </div>
                         <div className="flex items-center mt-1 ml-5 opacity-60">
                           <span className="truncate">"{record.purpose}"</span>
@@ -564,20 +590,20 @@ export default function Dashboard() {
                       {/* Column 4: Actions (Public) or Status (Admin) */}
                       <div className="flex justify-end items-center">
                         <div className="md:hidden text-right mr-3">
-                          <p className="text-[10px] font-black text-orange-600 leading-none">{formatTime(record.outTime)}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Out</p>
+                          <p className="text-[10px] font-black text-[#D4AF37] leading-none">{formatTime(record.outTime)}</p>
+                          <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest mt-0.5">Out</p>
                         </div>
 
                         {isAdmin ? (
                           <button
                             onClick={() => handleReturn(record.id)}
-                            className="h-8 px-5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-emerald-100 hover:border-emerald-600 whitespace-nowrap min-w-[100px]"
+                            className="h-8 px-5 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/20 hover:border-[#D4AF37] whitespace-nowrap min-w-[100px]"
                           >
                             <CheckCircle className="w-3.5 h-3.5 mr-2" />
                             Return
                           </button>
                         ) : (
-                          <div className="h-8 px-4 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-black flex items-center justify-center border border-orange-100 whitespace-nowrap min-w-[100px]">
+                          <div className="h-8 px-4 bg-[#D4AF37]/5 text-[#D4AF37] rounded-lg text-[10px] font-black flex items-center justify-center border border-[#D4AF37]/10 whitespace-nowrap min-w-[100px]">
                             <Clock className="w-3 h-3 mr-1.5 animate-pulse" />
                             Currently Out
                           </div>
@@ -603,25 +629,25 @@ export default function Dashboard() {
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"
+              className="absolute inset-0 bg-[var(--industrial-bg)]/80 backdrop-blur-sm transition-opacity duration-300"
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="relative w-full max-w-4xl bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
               {/* Header */}
-              <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
-                <h3 className="text-lg font-black text-slate-900 flex items-center">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-xl flex items-center justify-center mr-3">
-                    <Users className="w-4 h-4 text-indigo-600" />
+              <div className="px-6 py-5 border-b border-[var(--industrial-border)] bg-[var(--industrial-text)]/5 flex items-center justify-between">
+                <h3 className="text-lg font-black text-[var(--industrial-text)] flex items-center">
+                  <div className="w-8 h-8 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center mr-3">
+                    <Users className="w-4 h-4 text-[#D4AF37]" />
                   </div>
                   Employee Master
-                  <span className="ml-2.5 px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg border border-indigo-100">
+                  <span className="ml-2.5 px-2 py-0.5 bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-black rounded-lg border border-[#D4AF37]/20">
                     {employees.length} staff
                   </span>
                 </h3>
                 <button
                   onClick={() => setShowEmpMasterModal(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all duration-200"
+                  className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:text-[var(--industrial-text)] transition-all duration-200"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -630,12 +656,12 @@ export default function Dashboard() {
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto">
                 {/* Add Employee Form */}
                 <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">New Entry</h4>
+                  <h4 className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-4">New Entry</h4>
                   <form onSubmit={handleAddEmployee} className="space-y-2.5">
                     <input
                       type="text"
                       placeholder="Employee ID"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 text-xs font-bold outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 text-xs font-bold text-[var(--industrial-text)] outline-none placeholder:text-[var(--industrial-text-muted)]/50"
                       value={newEmpId}
                       onChange={(e) => setNewEmpId(e.target.value)}
                       required
@@ -643,24 +669,24 @@ export default function Dashboard() {
                     <input
                       type="text"
                       placeholder="Full Name"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 text-xs font-bold outline-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 text-xs font-bold text-[var(--industrial-text)] outline-none placeholder:text-[var(--industrial-text-muted)]/50"
                       value={newEmpName}
                       onChange={(e) => setNewEmpName(e.target.value)}
                       required
                     />
                     <select
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 bg-white font-bold text-xs text-slate-700 cursor-pointer outline-none appearance-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none"
                       value={newEmpDept}
                       onChange={(e) => setNewEmpDept(e.target.value)}
                       required
                     >
-                      <option value="" disabled>Assign Location...</option>
-                      <option value="IT DATA CENTER">IT DATA CENTER</option>
-                      <option value="IT COMMAND CENTER">IT COMMAND CENTER</option>
+                      <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Assign Location...</option>
+                      <option value="IT DATA CENTER" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">IT DATA CENTER</option>
+                      <option value="IT COMMAND CENTER" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">IT COMMAND CENTER</option>
                     </select>
                     <button
                       type="submit"
-                      className="w-full flex items-center justify-center py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-md transition-all duration-300 hover:-translate-y-0.5"
+                      className="w-full flex items-center justify-center py-2.5 px-4 rounded-xl gold-gradient gold-glow text-[#0B0F19] text-xs font-black transition-all duration-300 hover:-translate-y-0.5"
                     >
                       <Plus className="w-3.5 h-3.5 mr-2" />
                       Add Employee
@@ -669,13 +695,13 @@ export default function Dashboard() {
 
                   {/* Feedback messages */}
                   {empSuccess && (
-                    <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-bold">
+                    <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-sm font-bold">
                       <CheckCircle className="w-4 h-4 flex-shrink-0" />
                       {empSuccess}
                     </div>
                   )}
                   {empError && (
-                    <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold">
+                    <div className="mt-3 flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold">
                       <AlertCircle className="w-4 h-4 flex-shrink-0" />
                       {empError}
                     </div>
@@ -685,65 +711,64 @@ export default function Dashboard() {
                 {/* Employee List */}
                 <div>
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                    <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest">Current Employees</h4>
-                    
+                    <h4 className="text-sm font-black text-[var(--industrial-text)] uppercase tracking-widest">Current Employees</h4>
+
                     {/* Master Search Bar */}
                     <div className="relative flex-1 max-w-xs">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-3 w-3 text-slate-400" />
+                        <Search className="h-3 w-3 text-[var(--industrial-text-muted)]" />
                       </div>
                       <input
                         type="text"
                         placeholder="Search ID or Name..."
-                        className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 text-[10px] font-bold outline-none"
+                        className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 text-[10px] font-bold text-[var(--industrial-text)] outline-none placeholder:text-[var(--industrial-text-muted)]/50"
                         value={empSearchQuery}
                         onChange={(e) => setEmpSearchQuery(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  <div className="border border-slate-100 rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
+                  <div className="border border-[var(--industrial-border)] rounded-2xl overflow-hidden max-h-72 overflow-y-auto no-scrollbar">
                     <table className="min-w-full">
-                      <thead className="sticky top-0">
-                        <tr className="bg-slate-50">
-                          <th className="px-5 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
-                          <th className="px-5 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                          <th className="px-5 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                      <thead className="sticky top-0 z-10">
+                        <tr className="bg-[var(--industrial-text)]/5">
+                          <th className="px-5 py-3 text-left text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">ID</th>
+                          <th className="pl-5 pr-2 py-3 text-left text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Name</th>
+                          <th className="pl-6 pr-5 py-3 text-left text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-[var(--industrial-border)]">
                         {employees
-                          .filter(emp => emp.isActive !== false) // Only show active employees
-                          .filter(emp => 
-                            emp.id.toLowerCase().includes(empSearchQuery.toLowerCase()) || 
+                          .filter(emp =>
+                            emp.id.toLowerCase().includes(empSearchQuery.toLowerCase()) ||
                             emp.name.toLowerCase().includes(empSearchQuery.toLowerCase())
                           )
                           .map(emp => {
-                          const active = emp.isActive !== false; // treat NULL as active
-                          return (
-                            <tr key={emp.id} className={`hover:bg-slate-50/50 transition-colors ${!active ? 'opacity-50' : ''}`}>
-                              <td className="px-5 py-3 whitespace-nowrap">
-                                <span className="text-xs font-black text-slate-400">{emp.id}</span>
-                              </td>
-                              <td className="px-5 py-3 whitespace-nowrap">
-                                <span className="text-sm font-bold text-slate-800">{emp.name}</span>
-                              </td>
-                              <td className="px-5 py-3 whitespace-nowrap text-center">
-                                <button
-                                  onClick={() => handleToggleEmployee(emp.id, emp.name, active)}
-                                  className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-black border transition-all duration-200 ${active
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                    : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                                    }`}
-                                  title={active ? 'Click to deactivate' : 'Click to activate'}
-                                >
-                                  <span className="mr-1.5 leading-none">●</span>
-                                  {active ? 'ACTIVE' : 'INACTIVE'}
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                            const active = emp.isActive !== false; // treat NULL as active
+                            return (
+                              <tr key={emp.id} className={`hover:bg-[#D4AF37]/5 transition-colors ${!active ? 'opacity-50' : ''}`}>
+                                <td className="px-5 py-3 whitespace-nowrap">
+                                  <span className="text-xs font-black text-[var(--industrial-text-muted)]">{emp.id}</span>
+                                </td>
+                                <td className="pl-5 pr-2 py-3 whitespace-nowrap">
+                                  <span className="text-sm font-bold text-[var(--industrial-text)]">{emp.name}</span>
+                                </td>
+                                <td className="pl-6 pr-5 py-3 whitespace-nowrap text-left">
+                                  <button
+                                    onClick={() => handleToggleEmployee(emp.id, emp.name, active)}
+                                    className={`inline-flex items-center justify-start w-[88px] pl-3 py-1.5 rounded-full text-[9px] font-black border transition-all duration-300 ${active
+                                      ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 hover:bg-[#D4AF37]/20'
+                                      : 'bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] border-[var(--industrial-border)] hover:bg-[var(--industrial-text)]/10'
+                                      }`}
+                                    title={active ? 'Click to deactivate' : 'Click to activate'}
+                                  >
+                                    <span className="mr-2 leading-none text-[8px]">●</span>
+                                    <span className="leading-none">{active ? 'ACTIVE' : 'INACTIVE'}</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
                   </div>

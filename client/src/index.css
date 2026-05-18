@@ -1,30 +1,88 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    color: rgb(17 24 39);
-    background-color: rgb(249 250 251);
-  }
+:root {
+  --industrial-bg: #0B0F19;
+  --industrial-card: #161B22;
+  --industrial-accent: #D4AF37;
+  --industrial-accent-hover: #F1C40F;
+  --industrial-border: rgba(212, 175, 55, 0.12);
+  --industrial-text: #F3F4F6;
+  --industrial-text-muted: #9CA3AF;
+  --industrial-glow: rgba(212, 175, 55, 0.3);
 }
 
-/* Hide native browser clear (X) button inside date inputs */
-input[type="date"]::-webkit-clear-button {
+:root.light-theme {
+  --industrial-bg: #F8FAFC;
+  --industrial-card: #FFFFFF;
+  --industrial-accent: #D4AF37;
+  --industrial-accent-hover: #B8860B;
+  --industrial-border: rgba(212, 175, 55, 0.2);
+  --industrial-text: #0F172A;
+  --industrial-text-muted: #64748B;
+  --industrial-glow: rgba(212, 175, 55, 0.15);
+}
+
+body {
+  background-color: var(--industrial-bg);
+  color: var(--industrial-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body, nav, .glass-card, input, select, textarea, button, tr, td, th, div, span, h1, h2, h3, h4 {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--industrial-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--industrial-accent);
+}
+
+/* Form Styling Fixes */
+input[type="date"]::-webkit-clear-button,
+input[type="date"]::-webkit-inner-spin-button {
   display: none;
   -webkit-appearance: none;
 }
 
-input[type="date"]::-webkit-inner-spin-button {
+/* Utility Classes */
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+.glass-card {
+  background-color: rgba(22, 27, 34, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--industrial-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+}
+
+.gold-glow {
+  box-shadow: 0 0 20px var(--industrial-glow);
+}
+
+.gold-text-glow {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }

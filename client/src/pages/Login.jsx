@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, UserCircle, ShieldCheck, Fingerprint, Lock, ChevronRight, Sparkles, Command } from 'lucide-react';
+import { LogIn, UserCircle, ShieldCheck, Fingerprint, Lock, ChevronRight, Sparkles, Command, Sun, Moon } from 'lucide-react';
 
 export default function Login() {
   const [loginMode, setLoginMode] = useState('admin'); // 'admin' or 'employee'
@@ -9,6 +9,22 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Theme State
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -16,7 +32,7 @@ export default function Login() {
     const trimmedId = identifier.trim();
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: loginMode, identifier: trimmedId, password })
@@ -43,27 +59,41 @@ export default function Login() {
   const isEmployee = loginMode === 'employee';
 
   return (
-    <div className={`min-h-screen flex items-center justify-center font-sans p-4 relative transition-colors duration-700 overflow-hidden bg-[#0a0f1e]`}>
+    <div className={`min-h-screen flex items-center justify-center font-sans p-4 relative transition-colors duration-700 overflow-hidden bg-[var(--industrial-bg)]`}>
+      {/* Theme Toggle Button */}
+      <div className="absolute top-6 right-6 z-20">
+        <button
+          onClick={toggleTheme}
+          className="flex items-center justify-center p-2.5 rounded-2xl bg-[var(--industrial-text)]/5 hover:bg-[var(--industrial-text)]/10 text-[var(--industrial-text-muted)] hover:text-[var(--industrial-text)] transition-all duration-300 border border-[var(--industrial-border)] shadow-md animate-in fade-in duration-700"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-5 h-5 text-[#D4AF37] hover:rotate-45 transition-transform duration-300" />
+          ) : (
+            <Moon className="w-5 h-5 text-[#D4AF37] hover:-rotate-12 transition-transform duration-300" />
+          )}
+        </button>
+      </div>
+
       {/* Dynamic Animated Background */}
       <div className="absolute inset-0 z-0">
-        <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] opacity-40 transition-all duration-1000 ${isEmployee ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-600'}`}></div>
-        <div className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] opacity-40 transition-all duration-1000 delay-300 ${isEmployee ? 'bg-teal-600' : 'bg-purple-600 animate-pulse'}`}></div>
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[100px] opacity-20 animate-bounce transition-all duration-1000" style={{ animationDuration: '8s' }}></div>
+        <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] opacity-20 bg-[#D4AF37]`}></div>
+        <div className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] opacity-10 bg-[#D4AF37]`}></div>
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         {/* Main Card */}
-        <div className="bg-white/10 backdrop-blur-3xl rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] border border-white/20 overflow-hidden">
+        <div className="bg-[var(--industrial-card)] rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-[var(--industrial-border)] overflow-hidden">
           <div className="relative">
             {/* Decorative Top Accent */}
-            <div className={`absolute top-0 left-0 right-0 h-1.5 transition-colors duration-500 ${isEmployee ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
+            <div className={`absolute top-0 left-0 right-0 h-1.5 gold-gradient`}></div>
 
             {/* Header Section */}
             <div className="px-10 pt-10 pb-6 text-center">
               {/* KIMS Logo */}
               <div className="flex justify-center mb-5">
                 <div className="relative">
-                  <div className="absolute inset-0 blur-xl opacity-30 bg-white rounded-full scale-75" />
+                  <div className="absolute inset-0 blur-2xl opacity-20 bg-[#D4AF37] rounded-full scale-110" />
                   <img
                     src="/kims-logo.png"
                     alt="KIMS Logo"
@@ -72,25 +102,25 @@ export default function Login() {
                 </div>
               </div>
 
-              <h1 className="text-3xl font-black text-white tracking-tight mb-2">
-                KIMS <span className={isEmployee ? 'text-emerald-400' : 'text-indigo-400'}>Log</span>
+              <h1 className="text-3xl font-black text-[var(--industrial-text)] tracking-tight mb-2">
+                ICT <span className="text-[#D4AF37]">Log</span>
               </h1>
               <div className="flex items-center justify-center space-x-2">
-                <div className={`h-1 w-6 rounded-full ${isEmployee ? 'bg-emerald-500/30' : 'bg-indigo-500/30'}`}></div>
-                <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[9px]">Movement Portal</p>
-                <div className={`h-1 w-6 rounded-full ${isEmployee ? 'bg-emerald-500/30' : 'bg-indigo-500/30'}`}></div>
+                <div className={`h-1 w-6 rounded-full bg-[#D4AF37]/20`}></div>
+                <p className="text-[var(--industrial-text-muted)] font-bold uppercase tracking-[0.2em] text-[9px]">Movement Register</p>
+                <div className={`h-1 w-6 rounded-full bg-[#D4AF37]/20`}></div>
               </div>
             </div>
 
             {/* Role Switcher */}
             <div className="px-8 pb-6">
-              <div className="bg-black/20 backdrop-blur-md p-1 rounded-2xl flex items-center border border-white/5">
+              <div className="bg-[var(--industrial-text)]/5 backdrop-blur-md p-1.5 rounded-2xl flex items-center border border-[var(--industrial-border)]">
                 <button
                   onClick={() => { setLoginMode('admin'); setError(''); setIdentifier(''); setPassword(''); }}
-                  className={`flex-1 flex items-center justify-center py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-500 ${!isEmployee ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 scale-[1.02]' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`flex-1 flex items-center justify-center py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-500 bg-[#D4AF37] text-[#0B0F19] shadow-lg shadow-amber-900/20`}
                 >
-                  <ShieldCheck className={`w-3 h-3 mr-1.5 ${!isEmployee ? 'animate-pulse' : ''}`} />
-                  Master Access
+                  <ShieldCheck className={`w-3.5 h-3.5 mr-1.5 animate-pulse`} />
+                  Administrative Portal
                 </button>
               </div>
             </div>
@@ -100,16 +130,16 @@ export default function Login() {
               <form onSubmit={handleLogin} className="space-y-6">
                 {!isEmployee && (
                   <div className="space-y-2.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest ml-1">
                       Administrator ID
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                        <UserCircle className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
+                        <UserCircle className="h-4 w-4 text-[var(--industrial-text-muted)] group-focus-within:text-[#D4AF37] transition-colors" />
                       </div>
                       <input
                         type="text"
-                        className="w-full pl-12 pr-6 py-4 rounded-2xl border border-white/10 bg-black/20 focus:bg-black/40 text-white placeholder-slate-600 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all duration-500 font-bold outline-none text-sm"
+                        className="w-full pl-12 pr-6 py-4 rounded-2xl border border-[var(--industrial-border)] bg-[var(--industrial-text)]/5 focus:bg-[var(--industrial-text)]/10 text-[var(--industrial-text)] placeholder-[var(--industrial-text-muted)]/50 focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/60 transition-all duration-500 font-bold outline-none text-sm animate-pulse"
                         placeholder="Username"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
@@ -121,14 +151,14 @@ export default function Login() {
 
                 {!isEmployee && (
                   <div className="space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-500">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Security Key</label>
+                    <label className="text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest ml-1">Security Key</label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                        <Lock className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
+                        <Lock className="h-4 w-4 text-[var(--industrial-text-muted)] group-focus-within:text-[#D4AF37] transition-colors" />
                       </div>
                       <input
                         type="password"
-                        className="w-full pl-12 pr-6 py-4 rounded-2xl border border-white/10 bg-black/20 focus:bg-black/40 text-white placeholder-slate-600 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all duration-500 font-bold outline-none text-sm"
+                        className="w-full pl-12 pr-6 py-4 rounded-2xl border border-[var(--industrial-border)] bg-[var(--industrial-text)]/5 focus:bg-[var(--industrial-text)]/10 text-[var(--industrial-text)] placeholder-[var(--industrial-text-muted)]/50 focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/60 transition-all duration-500 font-bold outline-none text-sm animate-pulse"
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -147,12 +177,10 @@ export default function Login() {
 
                 <button
                   type="submit"
-                  className={`w-full py-5 rounded-[1.5rem] text-[13px] font-black text-white shadow-2xl transition-all duration-500 transform hover:-translate-y-1.5 active:scale-[0.98] flex items-center justify-center group overflow-hidden relative ${isEmployee
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-900/40'
-                    : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-indigo-900/40'}`}
+                  className={`w-full py-5 rounded-[1.5rem] text-[13px] font-black text-[#0B0F19] gold-gradient gold-glow shadow-2xl transition-all duration-500 transform hover:-translate-y-1.5 active:scale-[0.98] flex items-center justify-center group overflow-hidden relative`}
                 >
                   <span className="relative z-10 flex items-center uppercase tracking-widest">
-                    {isEmployee ? 'Launch Public Portal' : 'Authorize Master Access'}
+                    Authorize Master Access
                     <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
                   </span>
                   <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
