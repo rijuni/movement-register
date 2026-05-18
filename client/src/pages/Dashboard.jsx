@@ -249,7 +249,7 @@ export default function Dashboard() {
     paginatedData: paginatedActiveRecords,
     paginationInfo: activePaginationInfo,
     goToPage: goToActivePage
-  } = usePagination(activeRecords, 6);
+  } = usePagination(activeRecords, isAdmin ? 6 : 10);
 
   if (!user) return null;
 
@@ -551,67 +551,72 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-2">
               <div className="space-y-2">
-                {paginatedActiveRecords.map(record => (
-                  <div key={record.id} className="bg-[var(--industrial-card)] rounded-xl border border-[var(--industrial-border)] p-2.5 px-6 shadow-xl hover:border-[#D4AF37]/20 transition-all duration-300 group">
-                    <div className="grid grid-cols-2 md:grid-cols-4 items-center gap-4">
-                      {/* Column 1: Identity */}
-                      <div className="flex items-center min-w-0">
-                        <div className="w-8 h-8 bg-[var(--industrial-text)]/5 rounded-lg flex items-center justify-center mr-3 group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
-                          <User className="w-4 h-4 text-[var(--industrial-text-muted)] group-hover:text-[#D4AF37]" />
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-black text-[var(--industrial-text)] truncate">{record.employeeName}</h4>
-                          <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest">Staff Member</p>
-                        </div>
-                      </div>
-
-                      {/* Column 2: Time & Inform To */}
-                      <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)]">
-                        <div className="flex items-center">
-                          <Clock className="w-3 h-3 text-[#D4AF37] mr-2 shrink-0" />
-                          <span>Out: <span className="text-[var(--industrial-text)]">{formatTime(record.outTime)}</span></span>
-                        </div>
-                        <div className="flex items-center mt-1 ml-5 opacity-60">
-                          <span>Inform: {record.informTo}</span>
-                        </div>
-                      </div>
-
-                      {/* Column 3: Location & Purpose */}
-                      <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)] min-w-0">
-                        <div className="flex items-center">
-                          <MapPin className="w-3 h-3 text-[var(--industrial-text-muted)] mr-2 shrink-0" />
-                          <span className="truncate">To: <span className="text-[var(--industrial-text)]">{record.visitLocation}</span></span>
-                        </div>
-                        <div className="flex items-center mt-1 ml-5 opacity-60">
-                          <span className="truncate">"{record.purpose}"</span>
-                        </div>
-                      </div>
-
-                      {/* Column 4: Actions (Public) or Status (Admin) */}
-                      <div className="flex justify-end items-center">
-                        <div className="md:hidden text-right mr-3">
-                          <p className="text-[10px] font-black text-[#D4AF37] leading-none">{formatTime(record.outTime)}</p>
-                          <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest mt-0.5">Out</p>
-                        </div>
-
-                        {isAdmin ? (
-                          <button
-                            onClick={() => handleReturn(record.id)}
-                            className="h-8 px-5 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/20 hover:border-[#D4AF37] whitespace-nowrap min-w-[100px]"
-                          >
-                            <CheckCircle className="w-3.5 h-3.5 mr-2" />
-                            Return
-                          </button>
-                        ) : (
-                          <div className="h-8 px-4 bg-[#D4AF37]/5 text-[#D4AF37] rounded-lg text-[10px] font-black flex items-center justify-center border border-[#D4AF37]/10 whitespace-nowrap min-w-[100px]">
-                            <Clock className="w-3 h-3 mr-1.5 animate-pulse" />
-                            Currently Out
+                {paginatedActiveRecords.map(record => {
+                  const isOver2Hours = !isAdmin && record.outTime && (currentTime - new Date(record.outTime)) > 2 * 60 * 60 * 1000;
+                  return (
+                    <div key={record.id} className="bg-[var(--industrial-card)] rounded-xl border border-[var(--industrial-border)] p-2.5 px-6 shadow-xl hover:border-[#D4AF37]/20 transition-all duration-300 group">
+                      <div className="grid grid-cols-2 md:grid-cols-4 items-center gap-4">
+                        {/* Column 1: Identity */}
+                        <div className="flex items-center min-w-0">
+                          <div className="w-8 h-8 bg-[var(--industrial-text)]/5 rounded-lg flex items-center justify-center mr-3 group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
+                            <User className="w-4 h-4 text-[var(--industrial-text-muted)] group-hover:text-[#D4AF37]" />
                           </div>
-                        )}
+                          <div className="min-w-0">
+                            <h4 className={`text-xs font-black truncate ${isOver2Hours ? 'text-red-500 animate-pulse' : 'text-[var(--industrial-text)]'}`}>
+                              {record.employeeName}
+                            </h4>
+                            <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest">Staff Member</p>
+                          </div>
+                        </div>
+
+                        {/* Column 2: Time & Inform To */}
+                        <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)]">
+                          <div className="flex items-center">
+                            <Clock className="w-3 h-3 text-[#D4AF37] mr-2 shrink-0" />
+                            <span>Out: <span className="text-[var(--industrial-text)]">{formatTime(record.outTime)}</span></span>
+                          </div>
+                          <div className="flex items-center mt-1 ml-5 opacity-60">
+                            <span>Inform: {record.informTo}</span>
+                          </div>
+                        </div>
+
+                        {/* Column 3: Location & Purpose */}
+                        <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)] min-w-0">
+                          <div className="flex items-center">
+                            <MapPin className="w-3 h-3 text-[var(--industrial-text-muted)] mr-2 shrink-0" />
+                            <span className="truncate">To: <span className="text-[var(--industrial-text)]">{record.visitLocation}</span></span>
+                          </div>
+                          <div className="flex items-center mt-1 ml-5 opacity-60">
+                            <span className="truncate">"{record.purpose}"</span>
+                          </div>
+                        </div>
+
+                        {/* Column 4: Actions (Public) or Status (Admin) */}
+                        <div className="flex justify-end items-center">
+                          <div className="md:hidden text-right mr-3">
+                            <p className="text-[10px] font-black text-[#D4AF37] leading-none">{formatTime(record.outTime)}</p>
+                            <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest mt-0.5">Out</p>
+                          </div>
+
+                          {isAdmin ? (
+                            <button
+                              onClick={() => handleReturn(record.id)}
+                              className="h-8 px-5 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/20 hover:border-[#D4AF37] whitespace-nowrap min-w-[100px]"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 mr-2" />
+                              Return
+                            </button>
+                          ) : (
+                            <div className="h-8 px-4 bg-[#D4AF37]/5 text-[#D4AF37] rounded-lg text-[10px] font-black flex items-center justify-center border border-[#D4AF37]/10 whitespace-nowrap min-w-[100px]">
+                              <Clock className="w-3 h-3 mr-1.5 animate-pulse" />
+                              Currently Out
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="mt-4">
