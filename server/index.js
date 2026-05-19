@@ -103,6 +103,38 @@ const startServer = async () => {
     // Fix existing employees with NULL isActive (migration for new column)
     await sequelize.query('UPDATE Employees SET isActive = true WHERE isActive IS NULL');
     console.log('✅ Migrated NULL isActive → true');
+
+    // Fix existing employees with NULL department (migration)
+    const dataCenterNames = [
+      'Rajesh Ojha', 'Dibya Kishor Bishi', 'Bijay Kumar Maharana', 'Rajat Ku Mohanty', 
+      'Sanjay Kumar Sahoo', 'Sashikanta Behera', 'Rajesh Kumar Bal', 'Susant Kumar Pradhan', 
+      'Ranjit Singh Purty', 'Sandeep Sahoo', 'Sunil Kumar Barik', 'Gopabandhu Behera', 
+      'Pankaj Kumar Dash', 'Rajeeb Lochan Mishra', 'Babul Patra', 'Satwik Kanungo', 
+      'Satyabrata swain', 'Pradeep Kumar Sahoo', 'Papu Behera'
+    ];
+    const commandCenterNames = [
+      'Manaswini Behera', 'Lonalisa Badajena', 'Mukul Pattnaik', 'Abinash Das', 
+      'Ritwik Nandy', 'Satyajeet Sahoo', 'Laboni Pratihar', 'Bikku Kumar', 
+      'Diptiranjan Nayak', 'Sunita Rout', 'Anmol Nayak', 'Santosh Kumar Rout', 
+      'Suchismita Dash', 'Ashabari Dhal', 'Mitali Madhusmita Sahoo', 'Pratik Ray', 
+      'Tapaswini Ojha', 'Ananya Mahapatra', 'Pritipuspa Barik', 'Md Danish Alam', 
+      'Sidhanta Barik', 'Santosh Kumar Sahoo', 'Rikon kumar parida', 'Soumya Ranjan Das', 
+      'Jyotiranjan Nayak', 'Amlan Nanda', 'BijayaKetan Sahoo'
+    ];
+
+    for (const name of dataCenterNames) {
+      await Employee.update(
+        { department: 'IT DATA CENTER' },
+        { where: { name, department: null } }
+      );
+    }
+    for (const name of commandCenterNames) {
+      await Employee.update(
+        { department: 'IT COMMAND CENTER' },
+        { where: { name, department: null } }
+      );
+    }
+    console.log('✅ Migrated NULL department values for existing employees');
     
     await seedEmployees();
     
