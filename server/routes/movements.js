@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Movement = require('../models/Movement');
 const { Op } = require('sequelize');
+const { authenticate, authorizeRoles } = require('../middleware/auth');
 
 // Create a new movement
 router.post('/', async (req, res) => {
@@ -46,7 +47,7 @@ router.get('/', async (req, res) => {
 });
 
 // Mark return
-router.put('/:id/return', async (req, res) => {
+router.put('/:id/return', authenticate, authorizeRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { returnTime } = req.body;
@@ -65,7 +66,7 @@ router.put('/:id/return', async (req, res) => {
 });
 
 // Delete a record (Admin only)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, authorizeRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const movement = await Movement.findByPk(id);

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
+const { authenticate, authorizeRoles } = require('../middleware/auth');
 
 // Get all employees (pass ?activeOnly=true to filter active only)
 router.get('/', async (req, res) => {
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
 });
 
 // Add a new employee (Admin only)
-router.post('/', async (req, res) => {
+router.post('/', authenticate, authorizeRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
   try {
     const { id, name, department } = req.body;
     if (!id || !name) return res.status(400).json({ message: 'ID and Name are required' });
@@ -32,7 +33,7 @@ router.post('/', async (req, res) => {
 });
 
 // Toggle Active / Inactive status (Admin only)
-router.patch('/:id/toggle', async (req, res) => {
+router.patch('/:id/toggle', authenticate, authorizeRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
   try {
     const employee = await Employee.findByPk(req.params.id);
     if (!employee) return res.status(404).json({ message: 'Employee not found' });
@@ -47,7 +48,7 @@ router.patch('/:id/toggle', async (req, res) => {
 });
 
 // Delete an employee (Admin only)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, authorizeRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
   try {
     const employee = await Employee.findByPk(req.params.id);
     if (!employee) return res.status(404).json({ message: 'Employee not found' });

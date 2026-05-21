@@ -168,6 +168,18 @@ export default function Login() {
                   </div>
                 )}
 
+                {!isEmployee && (
+                  <div className="flex justify-end px-1">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/reset-password')}
+                      className="text-[9px] font-black uppercase tracking-widest text-[var(--industrial-text-muted)] hover:text-[#D4AF37] transition-all duration-300 outline-none cursor-pointer"
+                    >
+                      Reset Password?
+                    </button>
+                  </div>
+                )}
+
                 {error && (
                   <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-4 rounded-2xl text-xs font-bold flex items-center animate-in zoom-in duration-300">
                     <div className="w-2 h-2 bg-red-500 rounded-full mr-3 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>

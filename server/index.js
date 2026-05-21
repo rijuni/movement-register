@@ -8,6 +8,8 @@ const authRoutes = require('./routes/auth');
 const movementRoutes = require('./routes/movements');
 const employeeRoutes = require('./routes/employees');
 const Employee = require('./models/Employee');
+const Admin = require('./models/Admin');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 
@@ -137,6 +139,20 @@ const startServer = async () => {
     console.log('✅ Migrated NULL department values for existing employees');
     
     await seedEmployees();
+    
+    // Seed Super Admin if not exists
+    const adminCount = await Admin.count();
+    if (adminCount === 0) {
+      const hashedPassword = bcrypt.hashSync('admin123', 10);
+      await Admin.create({
+        firstName: 'Super',
+        lastName: 'Admin',
+        empId: 'admin',
+        password: hashedPassword,
+        role: 'SUPER_ADMIN',
+      });
+      console.log('🌱 Super Admin seeded successfully (admin/admin123)');
+    }
     
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);

@@ -156,10 +156,14 @@ export default function Dashboard() {
   };
 
   const handleReturn = async (id) => {
+    const token = sessionStorage.getItem('token');
     try {
       const response = await fetch(`/api/movements/${id}/return`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ returnTime: new Date().toISOString() })
       });
 
@@ -195,10 +199,14 @@ export default function Dashboard() {
     e.preventDefault();
     setEmpError('');
     setEmpSuccess('');
+    const token = sessionStorage.getItem('token');
     try {
       const res = await fetch('/api/employees', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           id: newEmpId.trim(),
           name: newEmpName.trim(),
@@ -223,8 +231,14 @@ export default function Dashboard() {
   const handleToggleEmployee = async (id, name, currentStatus) => {
     const action = currentStatus ? 'deactivate' : 'activate';
     if (!window.confirm(`Are you sure you want to ${action} "${name}"?`)) return;
+    const token = sessionStorage.getItem('token');
     try {
-      const res = await fetch(`/api/employees/${id}/toggle`, { method: 'PATCH' });
+      const res = await fetch(`/api/employees/${id}/toggle`, { 
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (res.ok) {
         const updated = await res.json();
         setEmpSuccess(`"${name}" marked as ${updated.isActive ? 'Active' : 'Inactive'}.`);
@@ -235,7 +249,7 @@ export default function Dashboard() {
     }
   };
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
   const isPublic = user?.role === 'public';
 
   const activeRecords = records.filter(r => {
