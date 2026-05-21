@@ -32,7 +32,7 @@ app.use((req, res, next) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7474;
 
 const seedEmployees = async () => {
   const employeeCount = await Employee.count();
