@@ -749,8 +749,8 @@ export default function Dashboard() {
 
                   <div className="border border-[var(--industrial-border)] rounded-2xl overflow-x-auto max-h-72 overflow-y-auto no-scrollbar">
                     <table className="min-w-full">
-                      <thead className="sticky top-0 z-10">
-                        <tr className="bg-[var(--industrial-text)]/5">
+                      <thead className="sticky top-0 z-10 bg-[var(--industrial-card)] border-b border-[var(--industrial-border)]">
+                        <tr>
                           <th className="px-5 py-3 text-left text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">ID</th>
                           <th className="pl-5 pr-2 py-3 text-left text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Name</th>
                           <th className="pl-6 pr-5 py-3 text-left text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Status</th>
