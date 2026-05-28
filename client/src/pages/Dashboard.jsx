@@ -652,7 +652,7 @@ export default function Dashboard() {
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-4xl bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="relative w-full max-w-5xl bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
               {/* Header */}
               <div className="px-6 py-5 border-b border-[var(--industrial-border)] bg-[var(--industrial-text)]/5 flex items-center justify-between">
                 <h3 className="text-lg font-black text-[var(--industrial-text)] flex items-center">
@@ -672,9 +672,9 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto">
+              <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-h-[70vh] overflow-y-auto">
                 {/* Add Employee Form */}
-                <div>
+                <div className="lg:col-span-5">
                   <h4 className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-4">New Entry</h4>
                   <form onSubmit={handleAddEmployee} className="space-y-2.5">
                     <input
@@ -728,7 +728,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Employee List */}
-                <div>
+                <div className="lg:col-span-7">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <h4 className="text-sm font-black text-[var(--industrial-text)] uppercase tracking-widest">Current Employees</h4>
 
@@ -747,7 +747,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="border border-[var(--industrial-border)] rounded-2xl overflow-hidden max-h-72 overflow-y-auto no-scrollbar">
+                  <div className="border border-[var(--industrial-border)] rounded-2xl overflow-x-auto max-h-72 overflow-y-auto no-scrollbar">
                     <table className="min-w-full">
                       <thead className="sticky top-0 z-10">
                         <tr className="bg-[var(--industrial-text)]/5">
