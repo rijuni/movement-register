@@ -15,13 +15,13 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/records" element={<Records />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route 
-          path="/admin-management" 
+        <Route
+          path="/admin-management"
           element={
             <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
               <AdminManagement />
             </ProtectedRoute>
-          } 
+          }
         />
       </Routes>
     </Router>

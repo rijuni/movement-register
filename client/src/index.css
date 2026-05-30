@@ -31,7 +31,22 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-body, nav, .glass-card, input, select, textarea, button, tr, td, th, div, span, h1, h2, h3, h4 {
+body,
+nav,
+.glass-card,
+input,
+select,
+textarea,
+button,
+tr,
+td,
+th,
+div,
+span,
+h1,
+h2,
+h3,
+h4 {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -40,13 +55,16 @@ body, nav, .glass-card, input, select, textarea, button, tr, td, th, div, span, 
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--industrial-bg);
 }
+
 ::-webkit-scrollbar-thumb {
   background: #1f2937;
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--industrial-accent);
 }
@@ -62,6 +80,7 @@ input[type="date"]::-webkit-inner-spin-button {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

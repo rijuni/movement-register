@@ -9,11 +9,11 @@ export default function Dashboard() {
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
-  
+
   // Location Selector State
   const [selectedLocation, setSelectedLocation] = useState(localStorage.getItem('selectedLocation') || 'IT DATA CENTER');
   const locations = ['IT DATA CENTER', 'IT COMMAND CENTER'];
-  
+
   // Theme State
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -57,7 +57,7 @@ export default function Dashboard() {
   const [empSuccess, setEmpSuccess] = useState('');
   const [empSearchQuery, setEmpSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   // TAT Stats State
   const [tatStats, setTatStats] = useState(null);
 
@@ -191,7 +191,7 @@ export default function Dashboard() {
     try {
       const response = await fetch(`/api/movements/${id}/return`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -220,7 +220,7 @@ export default function Dashboard() {
     const duration = currentTime - new Date(outTime);
     const hours = Math.floor(duration / (1000 * 60 * 60));
     const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours === 0) return `${minutes}m`;
     if (minutes === 0) return `${hours}h`;
     return `${hours}h ${minutes}m`;
@@ -228,17 +228,17 @@ export default function Dashboard() {
 
   const canMarkReturn = (record) => {
     if (!isAdmin || !user) return false;
-    
+
     // SUPER_ADMIN can mark return for any location
     if (user.role === 'SUPER_ADMIN') return true;
-    
+
     // ADMIN can only mark return if:
     // 1. Employee's department matches admin's location, OR
     // 2. Employee informed the admin directly
     const adminLocation = user.location || 'IT DATA CENTER';
     const employeeDept = record.employeeDepartment;
     const informedTo = record.informTo;
-    
+
     return adminLocation === employeeDept || informedTo === user.username;
   };
 
@@ -274,7 +274,7 @@ export default function Dashboard() {
     try {
       const res = await fetch('/api/employees', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -304,7 +304,7 @@ export default function Dashboard() {
     if (!window.confirm(`Are you sure you want to ${action} "${name}"?`)) return;
     const token = sessionStorage.getItem('token');
     try {
-      const res = await fetch(`/api/employees/${id}/toggle`, { 
+      const res = await fetch(`/api/employees/${id}/toggle`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -326,7 +326,7 @@ export default function Dashboard() {
   const activeRecords = records.filter(r => {
     const isOut = !r.returnTime;
     if (!isOut) return false;
-    
+
     // For admins, filter by their location (except SUPER_ADMIN sees all)
     if (isAdmin) {
       if (user?.role !== 'SUPER_ADMIN') {
@@ -337,7 +337,7 @@ export default function Dashboard() {
       // For public/employee, use selected location
       if (r.employeeDepartment !== selectedLocation) return false;
     }
-    
+
     if (!user) return true;
     return (isAdmin || isPublic) ? true : r.employeeName === user.username;
   });
@@ -356,7 +356,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--industrial-bg)] text-[var(--industrial-text)] transition-colors duration-500 pb-20">
+    <div className="min-h-screen flex flex-col bg-[var(--industrial-bg)] text-[var(--industrial-text)] transition-colors duration-500">
       {/* ── Side Drawer Overlay ── */}
       <div
         className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${showForm ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
@@ -416,11 +416,11 @@ export default function Dashboard() {
                 {showEmployeeDropdown && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto">
                     {employees
-                      .filter(emp => 
-                        emp.isActive !== false && 
+                      .filter(emp =>
+                        emp.isActive !== false &&
                         emp.department === selectedLocation &&
                         (emp.name.toLowerCase().includes(employeeSearchInput.toLowerCase()) ||
-                         emp.id.toLowerCase().includes(employeeSearchInput.toLowerCase()))
+                          emp.id.toLowerCase().includes(employeeSearchInput.toLowerCase()))
                       )
                       .length === 0 ? (
                       <div className="px-4 py-3 text-center text-[10px] font-bold text-[var(--industrial-text-muted)]">
@@ -428,11 +428,11 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       employees
-                        .filter(emp => 
-                          emp.isActive !== false && 
+                        .filter(emp =>
+                          emp.isActive !== false &&
                           emp.department === selectedLocation &&
                           (emp.name.toLowerCase().includes(employeeSearchInput.toLowerCase()) ||
-                           emp.id.toLowerCase().includes(employeeSearchInput.toLowerCase()))
+                            emp.id.toLowerCase().includes(employeeSearchInput.toLowerCase()))
                         )
                         .map(emp => (
                           <button
@@ -538,7 +538,7 @@ export default function Dashboard() {
 
       {/* ── Navigation ── */}
       <nav className="bg-[var(--industrial-card)]/80 backdrop-blur-xl sticky top-0 z-30 border-b border-[var(--industrial-border)] shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className={`p-2 rounded-xl gold-glow gold-gradient mr-3`}>
@@ -625,8 +625,8 @@ export default function Dashboard() {
       {/* ── Location Selector (Only for non-admin users) ── */}
       {!isAdmin && (
         <div className="bg-[var(--industrial-card)]/50 backdrop-blur-sm border-b border-[var(--industrial-border)] sticky top-16 z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center space-x-3">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-center space-x-3">
               <MapPin className="w-4 h-4 text-[#D4AF37]" />
               <label className="text-xs font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Location:</label>
               <div className="flex space-x-2">
@@ -634,11 +634,10 @@ export default function Dashboard() {
                   <button
                     key={loc}
                     onClick={() => handleLocationChange(loc)}
-                    className={`px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 ${
-                      selectedLocation === loc
+                    className={`px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 ${selectedLocation === loc
                         ? 'bg-[#D4AF37] text-[#0B0F19] shadow-lg shadow-amber-500/30'
                         : 'bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:bg-[var(--industrial-text)]/10 border border-[var(--industrial-border)]'
-                    }`}
+                      }`}
                   >
                     {loc}
                   </button>
@@ -650,7 +649,7 @@ export default function Dashboard() {
       )}
 
       {/* ── Main Content ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="flex-1 w-full flex flex-col px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-[var(--industrial-text)] tracking-tight">
@@ -735,13 +734,13 @@ export default function Dashboard() {
         )}
 
         {/* Currently Outside Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-[var(--industrial-text-muted)] uppercase tracking-[0.2em] flex items-center">
-              <div className="w-6 h-6 bg-[#D4AF37]/10 rounded-lg flex items-center justify-center mr-3">
-                <Info className="w-3 h-3 text-[#D4AF37]" />
+        <div className="space-y-8 flex-1 flex flex-col">
+          <div className="flex items-center justify-between border-b border-[var(--industrial-border)] pb-4">
+            <h3 className="text-xl md:text-2xl font-black text-[#D4AF37] uppercase tracking-[0.2em] flex items-center">
+              <div className="w-10 h-10 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center mr-4 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                <Info className="w-6 h-6 text-[#D4AF37]" />
               </div>
-              Current Status
+              Live Movement Status
             </h3>
           </div>
 
@@ -761,49 +760,49 @@ export default function Dashboard() {
                 {paginatedActiveRecords.map(record => {
                   const isOver2Hours = !isAdmin && record.outTime && (currentTime - new Date(record.outTime)) > 2 * 60 * 60 * 1000;
                   return (
-                    <div key={record.id} className="bg-[var(--industrial-card)] rounded-xl border border-[var(--industrial-border)] p-2.5 px-6 shadow-xl hover:border-[#D4AF37]/20 transition-all duration-300 group">
-                      <div className="grid grid-cols-2 md:grid-cols-5 items-center gap-4">
+                    <div key={record.id} className="bg-[var(--industrial-card)] rounded-2xl border-2 border-[var(--industrial-border)] p-4 md:p-6 shadow-2xl hover:border-[#D4AF37]/40 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)] transition-all duration-300 group transform hover:-translate-y-1">
+                      <div className="grid grid-cols-2 md:grid-cols-5 items-center gap-6">
                         {/* Column 1: Identity */}
                         <div className="flex items-center min-w-0">
-                          <div className="w-8 h-8 bg-[var(--industrial-text)]/5 rounded-lg flex items-center justify-center mr-3 group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
-                            <User className="w-4 h-4 text-[var(--industrial-text-muted)] group-hover:text-[#D4AF37]" />
+                          <div className="w-12 h-12 bg-[var(--industrial-text)]/5 rounded-xl flex items-center justify-center mr-4 group-hover:bg-[#D4AF37]/20 transition-colors shrink-0 border border-[var(--industrial-border)] group-hover:border-[#D4AF37]/30">
+                            <User className="w-6 h-6 text-[var(--industrial-text-muted)] group-hover:text-[#D4AF37]" />
                           </div>
                           <div className="min-w-0">
-                            <h4 className={`text-xs font-black truncate ${isOver2Hours ? 'text-red-500 animate-pulse' : 'text-[var(--industrial-text)]'}`}>
+                            <h4 className={`text-base md:text-lg font-black truncate ${isOver2Hours ? 'text-red-500 animate-pulse' : 'text-[var(--industrial-text)]'}`}>
                               {record.employeeName}
                             </h4>
-                            <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest">Staff Member</p>
+                            <p className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest mt-1">Staff Member</p>
                           </div>
                         </div>
 
                         {/* Column 2: Time & Inform To */}
-                        <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)]">
-                          <div className="flex items-center">
-                            <Clock className="w-3 h-3 text-[#D4AF37] mr-2 shrink-0" />
-                            <span>Out: <span className="text-[var(--industrial-text)]">{formatTime(record.outTime)}</span></span>
+                        <div className="hidden md:flex flex-col text-xs font-bold text-[var(--industrial-text-muted)]">
+                          <div className="flex items-center bg-[var(--industrial-text)]/5 rounded-lg px-3 py-1.5 w-fit border border-[var(--industrial-border)]">
+                            <Clock className="w-4 h-4 text-[#D4AF37] mr-2 shrink-0" />
+                            <span className="uppercase tracking-wider">Out: <span className="text-[var(--industrial-text)] ml-1">{formatTime(record.outTime)}</span></span>
                           </div>
-                          <div className="flex items-center mt-1 ml-5 opacity-60">
-                            <span>Inform: {record.informTo}</span>
+                          <div className="flex items-center mt-2 ml-1 opacity-80">
+                            <span className="text-[#D4AF37] mr-1">↳</span> Inform: <span className="text-[var(--industrial-text)] ml-1">{record.informTo}</span>
                           </div>
                         </div>
 
                         {/* Column 2.5: Current TAT */}
-                        <div className="hidden md:flex flex-col text-[10px] font-bold">
-                          <div className="inline-flex items-center px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 w-fit">
-                            <Clock className="w-2.5 h-2.5 mr-1.5" />
+                        <div className="hidden md:flex flex-col text-xs font-bold items-center justify-center">
+                          <div className="inline-flex items-center px-4 py-2 rounded-xl bg-blue-500/10 text-blue-400 border-2 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)] text-sm">
+                            <Clock className="w-4 h-4 mr-2" />
                             {calculateCurrentTAT(record.outTime)}
                           </div>
-                          <span className="text-[var(--industrial-text-muted)] mt-1 ml-2">Elapsed</span>
+                          <span className="text-[var(--industrial-text-muted)] mt-2 uppercase tracking-widest text-[10px]">Elapsed Time</span>
                         </div>
 
                         {/* Column 3: Location & Purpose */}
-                        <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)] min-w-0">
-                          <div className="flex items-center">
-                            <MapPin className="w-3 h-3 text-[var(--industrial-text-muted)] mr-2 shrink-0" />
-                            <span className="truncate">To: <span className="text-[var(--industrial-text)]">{record.visitLocation}</span></span>
+                        <div className="hidden md:flex flex-col text-xs font-bold text-[var(--industrial-text-muted)] min-w-0">
+                          <div className="flex items-center bg-[var(--industrial-text)]/5 rounded-lg px-3 py-1.5 w-fit border border-[var(--industrial-border)] truncate max-w-full">
+                            <MapPin className="w-4 h-4 text-[#D4AF37] mr-2 shrink-0" />
+                            <span className="uppercase tracking-wider truncate">To: <span className="text-[var(--industrial-text)] ml-1 truncate">{record.visitLocation}</span></span>
                           </div>
-                          <div className="flex items-center mt-1 ml-5 opacity-60">
-                            <span className="truncate">"{record.purpose}"</span>
+                          <div className="flex items-center mt-2 ml-1 opacity-80 truncate">
+                            <span className="text-[#D4AF37] mr-1">↳</span> <span className="truncate italic">"{record.purpose}"</span>
                           </div>
                         </div>
 
@@ -819,20 +818,20 @@ export default function Dashboard() {
                             canMarkReturn(record) ? (
                               <button
                                 onClick={() => handleReturn(record.id)}
-                                className="h-8 px-5 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/20 hover:border-[#D4AF37] whitespace-nowrap min-w-[100px]"
+                                className="h-12 px-8 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center border-2 border-[#D4AF37]/30 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] whitespace-nowrap uppercase tracking-widest"
                               >
-                                <CheckCircle className="w-3.5 h-3.5 mr-2" />
+                                <CheckCircle className="w-5 h-5 mr-2.5" />
                                 Return
                               </button>
                             ) : (
-                              <div className="h-8 px-5 bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] rounded-lg text-[10px] font-black flex items-center justify-center border border-[var(--industrial-border)] whitespace-nowrap min-w-[100px] opacity-50 cursor-not-allowed">
-                                <AlertCircle className="w-3.5 h-3.5 mr-2" />
-                                Not Authorized
+                              <div className="h-12 px-6 bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] rounded-xl text-xs font-black flex items-center justify-center border border-[var(--industrial-border)] whitespace-nowrap opacity-50 cursor-not-allowed uppercase tracking-widest">
+                                <AlertCircle className="w-5 h-5 mr-2.5" />
+                                Not Auth
                               </div>
                             )
                           ) : (
-                            <div className="h-8 px-4 bg-[#D4AF37]/5 text-[#D4AF37] rounded-lg text-[10px] font-black flex items-center justify-center border border-[#D4AF37]/10 whitespace-nowrap min-w-[100px]">
-                              <Clock className="w-3 h-3 mr-1.5 animate-pulse" />
+                            <div className="h-12 px-8 bg-[#D4AF37]/10 text-[#D4AF37] rounded-xl text-xs font-black flex items-center justify-center border-2 border-[#D4AF37]/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] whitespace-nowrap uppercase tracking-widest">
+                              <Clock className="w-5 h-5 mr-2.5 animate-spin-slow" style={{ animationDuration: '3s' }} />
                               Currently Out
                             </div>
                           )}
