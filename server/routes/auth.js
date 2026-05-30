@@ -40,7 +40,8 @@ router.post('/login', async (req, res) => {
           id: admin.id, 
           username: `${admin.firstName} ${admin.lastName}`, 
           empId: admin.empId, 
-          role: admin.role 
+          role: admin.role,
+          location: admin.location || 'IT DATA CENTER'
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -52,7 +53,8 @@ router.post('/login', async (req, res) => {
         user: { 
           username: `${admin.firstName} ${admin.lastName}`, 
           empId: admin.empId,
-          role: admin.role 
+          role: admin.role,
+          location: admin.location || 'IT DATA CENTER'
         } 
       });
     } else {

@@ -28,6 +28,11 @@ const Admin = sequelize.define('Admin', {
     type: DataTypes.ENUM('SUPER_ADMIN', 'ADMIN'),
     allowNull: false,
     defaultValue: 'ADMIN',
+  },
+  location: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'IT DATA CENTER',
   }
 }, {
   timestamps: true,

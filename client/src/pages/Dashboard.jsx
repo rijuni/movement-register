@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Clock, User, Info, FileText, CheckCircle, History, Trash2, MapPin, MessageSquare, Search, UserCheck, Shield, Sparkles, ChevronRight, Plus, X, Users, AlertCircle, Sun, Moon } from 'lucide-react';
-import { MANAGERS, LOCATIONS } from '../constants';
+import { MANAGERS, LOCATIONS, MANAGER_LOCATIONS } from '../constants';
 import { usePagination, Pagination } from '../utils';
 
 export default function Dashboard() {
@@ -9,6 +9,10 @@ export default function Dashboard() {
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
+  
+  // Location Selector State
+  const [selectedLocation, setSelectedLocation] = useState(localStorage.getItem('selectedLocation') || 'IT DATA CENTER');
+  const locations = ['IT DATA CENTER', 'IT COMMAND CENTER'];
   
   // Theme State
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -26,18 +30,24 @@ export default function Dashboard() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+  const handleLocationChange = (location) => {
+    setSelectedLocation(location);
+    localStorage.setItem('selectedLocation', location);
+  };
+
   // Drawer State
   const [showForm, setShowForm] = useState(false);
   const [showEmpMasterModal, setShowEmpMasterModal] = useState(false);
 
   // Form State
   const [employeeName, setEmployeeName] = useState('');
+  const [employeeSearchInput, setEmployeeSearchInput] = useState('');
+  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
   const [informTo, setInformTo] = useState('');
   const [customInformTo, setCustomInformTo] = useState('');
   const [visitLocation, setVisitLocation] = useState('');
   const [customLocation, setCustomLocation] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [selectedDept, setSelectedDept] = useState('');
 
   // Employee Master State (Admin only)
   const [newEmpId, setNewEmpId] = useState('');
@@ -47,6 +57,9 @@ export default function Dashboard() {
   const [empSuccess, setEmpSuccess] = useState('');
   const [empSearchQuery, setEmpSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // TAT Stats State
+  const [tatStats, setTatStats] = useState(null);
 
   // Auto-clear feedback messages
   useEffect(() => {
@@ -74,6 +87,7 @@ export default function Dashboard() {
     }
 
     fetchInitialData(currentUser);
+    fetchTatStats(currentUser.username);
 
     // Live Clock
     const clockInterval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -81,6 +95,7 @@ export default function Dashboard() {
     // Auto-refresh every 3 seconds
     const dataInterval = setInterval(() => {
       fetchRecords(currentUser);
+      fetchTatStats(currentUser.username);
     }, 3000);
 
     return () => {
@@ -113,12 +128,27 @@ export default function Dashboard() {
     }
   };
 
+  const fetchTatStats = async (employeeName) => {
+    if (!employeeName || employeeName === 'Public User') return;
+    try {
+      const response = await fetch(`/api/movements/stats/tat?employeeName=${encodeURIComponent(employeeName)}`);
+      const data = await response.json();
+      if (data.data && data.data.length > 0) {
+        setTatStats(data.data[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch TAT stats:', err);
+    }
+  };
+
   const resetForm = () => {
     setInformTo('');
     setCustomInformTo('');
     setVisitLocation('');
     setCustomLocation('');
     setPurpose('');
+    setEmployeeSearchInput('');
+    setShowEmployeeDropdown(false);
     if (user && user.role !== 'employee') setEmployeeName('');
   };
 
@@ -135,7 +165,8 @@ export default function Dashboard() {
       informTo: informTo === 'Others' ? customInformTo : informTo,
       visitLocation: visitLocation === 'Others' ? customLocation : visitLocation,
       purpose,
-      date: new Date().toLocaleDateString()
+      date: new Date().toLocaleDateString(),
+      employeeDepartment: selectedLocation
     };
 
     try {
@@ -184,6 +215,33 @@ export default function Dashboard() {
     window.location.href = '/';
   };
 
+  const calculateCurrentTAT = (outTime) => {
+    if (!outTime) return '-';
+    const duration = currentTime - new Date(outTime);
+    const hours = Math.floor(duration / (1000 * 60 * 60));
+    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours === 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  };
+
+  const canMarkReturn = (record) => {
+    if (!isAdmin || !user) return false;
+    
+    // SUPER_ADMIN can mark return for any location
+    if (user.role === 'SUPER_ADMIN') return true;
+    
+    // ADMIN can only mark return if:
+    // 1. Employee's department matches admin's location, OR
+    // 2. Employee informed the admin directly
+    const adminLocation = user.location || 'IT DATA CENTER';
+    const employeeDept = record.employeeDepartment;
+    const informedTo = record.informTo;
+    
+    return adminLocation === employeeDept || informedTo === user.username;
+  };
+
   const fetchEmployees = async () => {
     try {
       // Fetch ALL employees for the admin master list
@@ -193,6 +251,19 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Failed to fetch employees:', err);
     }
+  };
+
+  // Get filtered managers based on employee's department
+  const getFilteredManagers = () => {
+    const dataCenterManagers = ["MANASWINI BEHERA", "LABONI PRATIHAR"];
+    const commandCenterManagers = MANAGERS.filter(m => !["MANASWINI BEHERA", "LABONI PRATIHAR"].includes(m));
+
+    if (selectedLocation === "IT DATA CENTER") {
+      return dataCenterManagers;
+    } else if (selectedLocation === "IT COMMAND CENTER") {
+      return commandCenterManagers;
+    }
+    return MANAGERS;
   };
 
   const handleAddEmployee = async (e) => {
@@ -255,6 +326,18 @@ export default function Dashboard() {
   const activeRecords = records.filter(r => {
     const isOut = !r.returnTime;
     if (!isOut) return false;
+    
+    // For admins, filter by their location (except SUPER_ADMIN sees all)
+    if (isAdmin) {
+      if (user?.role !== 'SUPER_ADMIN') {
+        const adminLocation = user?.location || 'IT DATA CENTER';
+        if (r.employeeDepartment !== adminLocation) return false;
+      }
+    } else {
+      // For public/employee, use selected location
+      if (r.employeeDepartment !== selectedLocation) return false;
+    }
+    
     if (!user) return true;
     return (isAdmin || isPublic) ? true : r.employeeName === user.username;
   });
@@ -304,58 +387,80 @@ export default function Dashboard() {
         {/* Drawer Body — scrollable */}
         <div className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar">
           <form onSubmit={handleGoOut} className="space-y-5">
-            {/* Select Location/Department */}
-            <div>
-              <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Location</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                  <MapPin className="h-3.5 w-3.5 text-[var(--industrial-text-muted)] group-focus-within:text-[#D4AF37] transition-colors" />
-                </div>
-                <select
-                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none"
-                  value={selectedDept}
-                  onChange={(e) => {
-                    setSelectedDept(e.target.value);
-                    setEmployeeName('');
-                  }}
-                  required
-                >
-                  <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Choose Location...</option>
-                  <option value="IT DATA CENTER" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">IT DATA CENTER</option>
-                  <option value="IT COMMAND CENTER" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">IT COMMAND CENTER</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <ChevronRight className="h-3 w-3 text-[var(--industrial-text-muted)] rotate-90" />
-                </div>
-              </div>
-            </div>
-
             {/* Select Person */}
             <div>
               <label className="block text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2 ml-1">Select Person</label>
-              <div className="relative group">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                  <UserCheck className="h-3.5 w-3.5 text-[var(--industrial-text-muted)] group-focus-within:text-[#D4AF37] transition-colors" />
+                  <UserCheck className="h-3.5 w-3.5 text-[var(--industrial-text-muted)] transition-colors" />
                 </div>
-                <select
-                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] cursor-pointer outline-none appearance-none disabled:opacity-50"
-                  value={employeeName}
-                  onChange={(e) => setEmployeeName(e.target.value)}
-                  required
-                  disabled={!selectedDept}
-                >
-                  <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{selectedDept ? 'Choose a name...' : 'First select location'}</option>
-                  {employees
-                    .filter(emp => emp.isActive !== false && emp.department === selectedDept)
-                    .map(emp => (
-                      <option key={emp.id} value={emp.name} className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{emp.name}</option>
-                    ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <ChevronRight className="h-3 w-3 text-[var(--industrial-text-muted)] rotate-90" />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Search employee..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 font-bold text-xs text-[var(--industrial-text)] outline-none"
+                  value={employeeSearchInput}
+                  onChange={(e) => {
+                    setEmployeeSearchInput(e.target.value);
+                    setShowEmployeeDropdown(true);
+                  }}
+                  onFocus={() => setShowEmployeeDropdown(true)}
+                  required={!employeeName}
+                />
+                {employeeName && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <span className="text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded">{employeeName}</span>
+                  </div>
+                )}
+
+                {/* Dropdown List */}
+                {showEmployeeDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto">
+                    {employees
+                      .filter(emp => 
+                        emp.isActive !== false && 
+                        emp.department === selectedLocation &&
+                        (emp.name.toLowerCase().includes(employeeSearchInput.toLowerCase()) ||
+                         emp.id.toLowerCase().includes(employeeSearchInput.toLowerCase()))
+                      )
+                      .length === 0 ? (
+                      <div className="px-4 py-3 text-center text-[10px] font-bold text-[var(--industrial-text-muted)]">
+                        No employees found
+                      </div>
+                    ) : (
+                      employees
+                        .filter(emp => 
+                          emp.isActive !== false && 
+                          emp.department === selectedLocation &&
+                          (emp.name.toLowerCase().includes(employeeSearchInput.toLowerCase()) ||
+                           emp.id.toLowerCase().includes(employeeSearchInput.toLowerCase()))
+                        )
+                        .map(emp => (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            onClick={() => {
+                              setEmployeeName(emp.name);
+                              setEmployeeSearchInput('');
+                              setShowEmployeeDropdown(false);
+                            }}
+                            className="w-full px-4 py-2.5 text-left text-xs font-bold text-[var(--industrial-text)] hover:bg-[#D4AF37]/10 transition-colors border-b border-[var(--industrial-border)]/30 last:border-b-0"
+                          >
+                            {emp.name}
+                          </button>
+                        ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Close dropdown when clicking outside */}
+            {showEmployeeDropdown && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowEmployeeDropdown(false)}
+              />
+            )}
 
             {/* Whom to Inform */}
             <div>
@@ -367,7 +472,7 @@ export default function Dashboard() {
                 required
               >
                 <option value="" disabled className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Select whom to inform</option>
-                {MANAGERS.map(mgr => <option key={mgr} value={mgr} className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{mgr}</option>)}
+                {getFilteredManagers().map(mgr => <option key={mgr} value={mgr} className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">{mgr}</option>)}
                 <option value="Others" className="bg-[var(--industrial-card)] text-[var(--industrial-text)]">Others</option>
               </select>
               {informTo === 'Others' && (
@@ -517,6 +622,33 @@ export default function Dashboard() {
         </div>
       </nav>
 
+      {/* ── Location Selector (Only for non-admin users) ── */}
+      {!isAdmin && (
+        <div className="bg-[var(--industrial-card)]/50 backdrop-blur-sm border-b border-[var(--industrial-border)] sticky top-16 z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center space-x-3">
+              <MapPin className="w-4 h-4 text-[#D4AF37]" />
+              <label className="text-xs font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Location:</label>
+              <div className="flex space-x-2">
+                {locations.map(loc => (
+                  <button
+                    key={loc}
+                    onClick={() => handleLocationChange(loc)}
+                    className={`px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 ${
+                      selectedLocation === loc
+                        ? 'bg-[#D4AF37] text-[#0B0F19] shadow-lg shadow-amber-500/30'
+                        : 'bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:bg-[var(--industrial-text)]/10 border border-[var(--industrial-border)]'
+                    }`}
+                  >
+                    {loc}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Main Content ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -540,6 +672,67 @@ export default function Dashboard() {
             </button>
           )}
         </div>
+
+        {/* Individual Employee TAT Stats */}
+        {!isAdmin && user && user.username !== 'Public User' && tatStats && (
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Total Trips Card */}
+            <div className="bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2">Total Trips</p>
+                  <p className="text-3xl font-black text-[#D4AF37]">{tatStats.totalTrips}</p>
+                </div>
+                <div className="w-10 h-10 bg-[#D4AF37]/10 rounded-xl flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-[var(--industrial-text-muted)] mt-3">Times outside</p>
+            </div>
+
+            {/* Total Time Card */}
+            <div className="bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2">Total TAT</p>
+                  <p className="text-3xl font-black text-green-400">{tatStats.totalTime}</p>
+                </div>
+                <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-green-400" />
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-[var(--industrial-text-muted)] mt-3">Combined duration</p>
+            </div>
+
+            {/* Average Time Card */}
+            <div className="bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2">Avg. TAT</p>
+                  <p className="text-3xl font-black text-blue-400">{tatStats.averageTime}</p>
+                </div>
+                <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                  <Info className="w-5 h-5 text-blue-400" />
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-[var(--industrial-text-muted)] mt-3">Per trip average</p>
+            </div>
+
+            {/* Employee ID Card */}
+            <div className="bg-[var(--industrial-card)] border border-[var(--industrial-border)] rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest mb-2">Employee ID</p>
+                  <p className="text-3xl font-black text-purple-400">{tatStats.employeeId}</p>
+                </div>
+                <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                  <User className="w-5 h-5 text-purple-400" />
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-[var(--industrial-text-muted)] mt-3">Staff identifier</p>
+            </div>
+          </div>
+        )}
 
         {/* Currently Outside Section */}
         <div className="space-y-6">
@@ -569,7 +762,7 @@ export default function Dashboard() {
                   const isOver2Hours = !isAdmin && record.outTime && (currentTime - new Date(record.outTime)) > 2 * 60 * 60 * 1000;
                   return (
                     <div key={record.id} className="bg-[var(--industrial-card)] rounded-xl border border-[var(--industrial-border)] p-2.5 px-6 shadow-xl hover:border-[#D4AF37]/20 transition-all duration-300 group">
-                      <div className="grid grid-cols-2 md:grid-cols-4 items-center gap-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 items-center gap-4">
                         {/* Column 1: Identity */}
                         <div className="flex items-center min-w-0">
                           <div className="w-8 h-8 bg-[var(--industrial-text)]/5 rounded-lg flex items-center justify-center mr-3 group-hover:bg-[#D4AF37]/10 transition-colors shrink-0">
@@ -594,6 +787,15 @@ export default function Dashboard() {
                           </div>
                         </div>
 
+                        {/* Column 2.5: Current TAT */}
+                        <div className="hidden md:flex flex-col text-[10px] font-bold">
+                          <div className="inline-flex items-center px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 w-fit">
+                            <Clock className="w-2.5 h-2.5 mr-1.5" />
+                            {calculateCurrentTAT(record.outTime)}
+                          </div>
+                          <span className="text-[var(--industrial-text-muted)] mt-1 ml-2">Elapsed</span>
+                        </div>
+
                         {/* Column 3: Location & Purpose */}
                         <div className="hidden md:flex flex-col text-[10px] font-bold text-[var(--industrial-text-muted)] min-w-0">
                           <div className="flex items-center">
@@ -610,16 +812,24 @@ export default function Dashboard() {
                           <div className="md:hidden text-right mr-3">
                             <p className="text-[10px] font-black text-[#D4AF37] leading-none">{formatTime(record.outTime)}</p>
                             <p className="text-[8px] font-bold text-[var(--industrial-text-muted)] uppercase tracking-widest mt-0.5">Out</p>
+                            <p className="text-[10px] font-black text-blue-400 mt-1">{calculateCurrentTAT(record.outTime)}</p>
                           </div>
 
                           {isAdmin ? (
-                            <button
-                              onClick={() => handleReturn(record.id)}
-                              className="h-8 px-5 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/20 hover:border-[#D4AF37] whitespace-nowrap min-w-[100px]"
-                            >
-                              <CheckCircle className="w-3.5 h-3.5 mr-2" />
-                              Return
-                            </button>
+                            canMarkReturn(record) ? (
+                              <button
+                                onClick={() => handleReturn(record.id)}
+                                className="h-8 px-5 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#0B0F19] rounded-lg text-[10px] font-black transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/20 hover:border-[#D4AF37] whitespace-nowrap min-w-[100px]"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5 mr-2" />
+                                Return
+                              </button>
+                            ) : (
+                              <div className="h-8 px-5 bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] rounded-lg text-[10px] font-black flex items-center justify-center border border-[var(--industrial-border)] whitespace-nowrap min-w-[100px] opacity-50 cursor-not-allowed">
+                                <AlertCircle className="w-3.5 h-3.5 mr-2" />
+                                Not Authorized
+                              </div>
+                            )
                           ) : (
                             <div className="h-8 px-4 bg-[#D4AF37]/5 text-[#D4AF37] rounded-lg text-[10px] font-black flex items-center justify-center border border-[#D4AF37]/10 whitespace-nowrap min-w-[100px]">
                               <Clock className="w-3 h-3 mr-1.5 animate-pulse" />

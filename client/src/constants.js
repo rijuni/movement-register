@@ -52,6 +52,18 @@ export const MANAGERS = [
   "LONALISA BADAJENA"
 ].sort((a, b) => a.localeCompare(b));
 
+// Manager to Location Mapping
+export const MANAGER_LOCATIONS = {
+  "MANASWINI BEHERA": "IT DATA CENTER",
+  "ANMOL NAYAK": "IT DATA CENTER",
+  "LABONI PRATIHAR": "IT DATA CENTER",
+  "SK SAKIL": "IT COMMAND CENTER",
+  "SOUMYARANJAN DAS": "IT COMMAND CENTER",
+  "SATYAJIT SAHOO": "IT COMMAND CENTER",
+  "ASHABARI DHAL": "IT DATA CENTER",
+  "LONALISA BADAJENA": "IT COMMAND CENTER"
+};
+
 export const LOCATIONS = [
   "Admin",
   "Meeting",

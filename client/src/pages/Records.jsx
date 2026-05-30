@@ -11,6 +11,10 @@ export default function Records() {
   const [searchName, setSearchName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // Location Selector State
+  const [selectedLocation, setSelectedLocation] = useState(localStorage.getItem('selectedLocation') || 'IT DATA CENTER');
+  const locations = ['IT DATA CENTER', 'IT COMMAND CENTER'];
 
   // Theme State
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -26,6 +30,11 @@ export default function Records() {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleLocationChange = (location) => {
+    setSelectedLocation(location);
+    localStorage.setItem('selectedLocation', location);
   };
 
   useEffect(() => {
@@ -102,11 +111,17 @@ export default function Records() {
     XLSX.writeFile(workbook, filename);
   };
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
 
   const historyRecords = records
     .filter(r => r.returnTime !== null)
     .filter(r => {
+      // Location filter (except SUPER_ADMIN sees all)
+      if (isAdmin && user?.role !== 'SUPER_ADMIN') {
+        if (r.employeeDepartment !== selectedLocation) return false;
+      } else if (!isAdmin) {
+        if (r.employeeDepartment !== selectedLocation) return false;
+      }
       // Date Range filter
       if (startDate || endDate) {
         const recordDate = new Date(r.outTime).toISOString().slice(0, 10);
@@ -137,6 +152,17 @@ export default function Records() {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const calculateTAT = (outTime, returnTime) => {
+    if (!outTime || !returnTime) return '-';
+    const duration = new Date(returnTime) - new Date(outTime);
+    const hours = Math.floor(duration / (1000 * 60 * 60));
+    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours === 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
   };
 
   return (
@@ -197,6 +223,31 @@ export default function Records() {
           </div>
         </div>
       </nav>
+
+      {/* ── Location Selector ── */}
+      <div className="bg-[var(--industrial-card)]/50 backdrop-blur-sm border-b border-[var(--industrial-border)] sticky top-16 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center space-x-3">
+            <MapPin className="w-4 h-4 text-[#D4AF37]" />
+            <label className="text-xs font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Location:</label>
+            <div className="flex space-x-2">
+              {locations.map(loc => (
+                <button
+                  key={loc}
+                  onClick={() => handleLocationChange(loc)}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 ${
+                    selectedLocation === loc
+                      ? 'bg-[#D4AF37] text-[#0B0F19] shadow-lg shadow-amber-500/30'
+                      : 'bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:bg-[var(--industrial-text)]/10 border border-[var(--industrial-border)]'
+                  }`}
+                >
+                  {loc}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="mb-8">
@@ -287,6 +338,7 @@ export default function Records() {
                 <tr className="bg-[var(--industrial-text)]/5">
                   <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Person</th>
                   <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Time Window</th>
+                  <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">TAT</th>
                   <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Destination</th>
                   <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Purpose</th>
                   {isAdmin && <th className="px-6 py-4 text-right text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Actions</th>}
@@ -295,7 +347,7 @@ export default function Records() {
               <tbody className="divide-y divide-[var(--industrial-border)]">
                 {historyRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 5 : 4} className="px-6 py-16 text-center">
+                    <td colSpan={isAdmin ? 6 : 5} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center">
                         <div className="w-12 h-12 bg-[var(--industrial-text)]/5 rounded-full flex items-center justify-center mb-3">
                           <Search className="w-6 h-6 text-[var(--industrial-text-muted)]" />
@@ -322,6 +374,12 @@ export default function Records() {
                           <span className="text-[var(--industrial-text-muted)]/50 font-bold">→</span>
                           <span className="text-[10px] font-black text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded-lg">{formatTime(record.returnTime)}</span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                          <Clock className="w-2.5 h-2.5 mr-1.5" />
+                          {calculateTAT(record.outTime, record.returnTime)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] border border-[var(--industrial-border)]">

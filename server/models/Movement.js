@@ -37,6 +37,10 @@ const Movement = sequelize.define('Movement', {
   date: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  employeeDepartment: {
+    type: DataTypes.STRING,
+    allowNull: true,
   }
 }, {
   timestamps: true,
