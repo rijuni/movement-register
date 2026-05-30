@@ -36,10 +36,10 @@ router.post('/login', async (req, res) => {
 
       // Generate JWT Token
       const token = jwt.sign(
-        { 
-          id: admin.id, 
-          username: `${admin.firstName} ${admin.lastName}`, 
-          empId: admin.empId, 
+        {
+          id: admin.id,
+          username: `${admin.firstName} ${admin.lastName}`,
+          empId: admin.empId,
           role: admin.role,
           location: admin.location || 'IT DATA CENTER'
         },
@@ -47,15 +47,15 @@ router.post('/login', async (req, res) => {
         { expiresIn: '24h' }
       );
 
-      return res.json({ 
-        success: true, 
-        token, 
-        user: { 
-          username: `${admin.firstName} ${admin.lastName}`, 
+      return res.json({
+        success: true,
+        token,
+        user: {
+          username: `${admin.firstName} ${admin.lastName}`,
           empId: admin.empId,
           role: admin.role,
           location: admin.location || 'IT DATA CENTER'
-        } 
+        }
       });
     } else {
       // Public Access - No ID check required

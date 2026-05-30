@@ -327,13 +327,8 @@ export default function Dashboard() {
     const isOut = !r.returnTime;
     if (!isOut) return false;
 
-    // For admins, filter by their location (except SUPER_ADMIN sees all)
-    if (isAdmin) {
-      if (user?.role !== 'SUPER_ADMIN') {
-        const adminLocation = user?.location || 'IT DATA CENTER';
-        if (r.employeeDepartment !== adminLocation) return false;
-      }
-    } else {
+    // Admins (both SUPER_ADMIN and ADMIN) see all records
+    if (!isAdmin) {
       // For public/employee, use selected location
       if (r.employeeDepartment !== selectedLocation) return false;
     }
@@ -635,8 +630,8 @@ export default function Dashboard() {
                     key={loc}
                     onClick={() => handleLocationChange(loc)}
                     className={`px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 ${selectedLocation === loc
-                        ? 'bg-[#D4AF37] text-[#0B0F19] shadow-lg shadow-amber-500/30'
-                        : 'bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:bg-[var(--industrial-text)]/10 border border-[var(--industrial-border)]'
+                      ? 'bg-[#D4AF37] text-[#0B0F19] shadow-lg shadow-amber-500/30'
+                      : 'bg-[var(--industrial-text)]/5 text-[var(--industrial-text-muted)] hover:bg-[var(--industrial-text)]/10 border border-[var(--industrial-border)]'
                       }`}
                   >
                     {loc}

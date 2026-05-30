@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
   try {
     const { role, username } = req.query;
     let filter = {};
-    
+
     if (role === 'employee') {
       filter.employeeName = username;
     }
@@ -52,13 +52,13 @@ router.put('/:id/return', authenticate, authorizeRoles('SUPER_ADMIN', 'ADMIN'), 
   try {
     const { id } = req.params;
     const { returnTime } = req.body;
-    
+
     const movement = await Movement.findByPk(id);
     if (!movement) return res.status(404).json({ message: 'Movement not found' });
 
     movement.returnTime = returnTime;
     await movement.save();
-    
+
     res.json(movement);
   } catch (error) {
     console.error(error);
