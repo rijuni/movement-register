@@ -233,13 +233,11 @@ export default function Dashboard() {
     if (user.role === 'SUPER_ADMIN') return true;
 
     // ADMIN can only mark return if:
-    // 1. Employee's department matches admin's location, OR
-    // 2. Employee informed the admin directly
+    // Employee's department matches admin's location
     const adminLocation = user.location || 'IT DATA CENTER';
     const employeeDept = record.employeeDepartment;
-    const informedTo = record.informTo;
 
-    return adminLocation === employeeDept || informedTo === user.username;
+    return adminLocation === employeeDept;
   };
 
   const fetchEmployees = async () => {
@@ -327,8 +325,13 @@ export default function Dashboard() {
     const isOut = !r.returnTime;
     if (!isOut) return false;
 
-    // Admins (both SUPER_ADMIN and ADMIN) see all records
-    if (!isAdmin) {
+    // Admins filter by their specific location (except SUPER_ADMIN sees all)
+    if (isAdmin) {
+      if (user?.role !== 'SUPER_ADMIN') {
+        const adminLocation = user?.location || 'IT DATA CENTER';
+        if (r.employeeDepartment !== adminLocation) return false;
+      }
+    } else {
       // For public/employee, use selected location
       if (r.employeeDepartment !== selectedLocation) return false;
     }
@@ -650,6 +653,11 @@ export default function Dashboard() {
             <h2 className="text-2xl md:text-3xl font-black text-[var(--industrial-text)] tracking-tight">
               {isAdmin ? `Welcome, ${user.username}` : 'Employee Movement Portal'}
             </h2>
+            {isAdmin && user.role !== 'SUPER_ADMIN' && (
+              <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mt-1 mb-2">
+                Assigned Location: {user.location || 'IT DATA CENTER'}
+              </p>
+            )}
             <p className="text-[var(--industrial-text-muted)] font-bold mt-1 text-sm flex items-center">
               <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mr-2"></span>
               {activeRecords.length} people are currently out.

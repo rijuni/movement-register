@@ -129,9 +129,8 @@ router.get('/admins', authenticate, authorizeRoles('SUPER_ADMIN'), async (req, r
   }
 });
 
-// Create normal admin (Super Admin only)
 router.post('/create-admin', authenticate, authorizeRoles('SUPER_ADMIN'), async (req, res) => {
-  const { firstName, lastName, empId, password, confirmPassword } = req.body;
+  const { firstName, lastName, empId, password, confirmPassword, location } = req.body;
 
   try {
     if (!firstName || !lastName || !empId || !password || !confirmPassword) {
@@ -164,6 +163,7 @@ router.post('/create-admin', authenticate, authorizeRoles('SUPER_ADMIN'), async 
       lastName: lastName.trim(),
       empId: empId.trim(),
       password: hashedPassword,
+      location: location || 'IT DATA CENTER',
       role: 'ADMIN' // Always normal admin when created through this route
     });
 
@@ -180,7 +180,7 @@ router.post('/create-admin', authenticate, authorizeRoles('SUPER_ADMIN'), async 
 
 // Update normal admin (Super Admin only)
 router.put('/admins/:id', authenticate, authorizeRoles('SUPER_ADMIN'), async (req, res) => {
-  const { firstName, lastName, empId } = req.body;
+  const { firstName, lastName, empId, location } = req.body;
   const { id } = req.params;
 
   try {
@@ -208,6 +208,9 @@ router.put('/admins/:id', authenticate, authorizeRoles('SUPER_ADMIN'), async (re
     admin.firstName = firstName.trim();
     admin.lastName = lastName.trim();
     admin.empId = empId.trim();
+    if (location) {
+      admin.location = location;
+    }
     await admin.save();
 
     const adminResponse = admin.toJSON();

@@ -13,6 +13,7 @@ export default function AdminManagement() {
   const [empId, setEmpId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [location, setLocation] = useState('IT DATA CENTER');
 
   // Edit mode state
   const [editingAdminId, setEditingAdminId] = useState(null);
@@ -80,6 +81,7 @@ export default function AdminManagement() {
     setEmpId('');
     setPassword('');
     setConfirmPassword('');
+    setLocation('IT DATA CENTER');
     setEditingAdminId(null);
   };
 
@@ -118,8 +120,8 @@ export default function AdminManagement() {
 
     try {
       const payload = editingAdminId
-        ? { firstName: firstName.trim(), lastName: lastName.trim(), empId: empId.trim() }
-        : { firstName: firstName.trim(), lastName: lastName.trim(), empId: empId.trim(), password, confirmPassword };
+        ? { firstName: firstName.trim(), lastName: lastName.trim(), empId: empId.trim(), location }
+        : { firstName: firstName.trim(), lastName: lastName.trim(), empId: empId.trim(), password, confirmPassword, location };
 
       const response = await fetch(endpoint, {
         method,
@@ -153,6 +155,7 @@ export default function AdminManagement() {
     setFirstName(admin.firstName);
     setLastName(admin.lastName);
     setEmpId(admin.empId);
+    setLocation(admin.location || 'IT DATA CENTER');
     setPassword('');
     setConfirmPassword('');
   };
@@ -301,6 +304,20 @@ export default function AdminManagement() {
                 />
               </div>
 
+              {/* Assigned Location Dropdown */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest ml-1">Assigned Location</label>
+                <select
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--industrial-border)] focus:ring-4 focus:ring-[#D4AF37]/10 focus:border-[#D4AF37]/40 transition-all duration-300 bg-[var(--industrial-text)]/5 text-xs font-bold text-[var(--industrial-text)] outline-none"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="IT DATA CENTER" className="bg-[var(--industrial-card)]">IT DATA CENTER</option>
+                  <option value="IT COMMAND CENTER" className="bg-[var(--industrial-card)]">IT COMMAND CENTER</option>
+                </select>
+              </div>
+
               {/* Password (only in create mode) */}
               {!editingAdminId && (
                 <>
@@ -395,6 +412,7 @@ export default function AdminManagement() {
                   <tr className="bg-[var(--industrial-text)]/5">
                     <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Name</th>
                     <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Employee ID</th>
+                    <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Location</th>
                     <th className="px-6 py-4 text-left text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Role</th>
                     <th className="px-6 py-4 text-right text-[9px] font-black text-[var(--industrial-text-muted)] uppercase tracking-widest">Actions</th>
                   </tr>
@@ -416,6 +434,9 @@ export default function AdminManagement() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-xs font-bold text-[var(--industrial-text-muted)]">{admin.empId}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-[10px] font-black text-[#D4AF37]">{isSuper ? 'ALL LOCATIONS' : admin.location || 'N/A'}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black border ${isSuper
